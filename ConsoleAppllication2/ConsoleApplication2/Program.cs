@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,11 +32,12 @@ namespace ConsoleApplication2
             var message = messageEventArgs.Message;
             var messageText = message.Text;
             var chatId = message.Chat.Id;
+            var telegramId = message.From.Id;
             var firstName = message.From.FirstName;
             var lastName = message.From.LastName;
             string entityType = "";
 
-            Console.WriteLine("Message received from " + message.From.FirstName + " at " + chatId);
+            Console.WriteLine("\r\nMessage received from " + message.From.FirstName + " at " + chatId);
             try
             {
                 entityType = message.Entities.ElementAt(0).Type.ToString();
@@ -51,11 +52,14 @@ namespace ConsoleApplication2
                 if (messageText.StartsWith("/joingame")) {
                     if (GameDict.ContainsKey(chatId))
                     {
-                        await Bot.SendTextMessageAsync(chatId, "Join existing game unimplemented yet!");
+                        GameDict[chatId].AddPlayer(telegramId, firstName);
+                        //string asdf = GameDict[chatId].PlayersDict[telegramId] + "has joined the game!";
+                        await Bot.SendTextMessageAsync(chatId, "/joingame has run!");
+                        await Bot.SendTextMessageAsync(chatId, "please make this block of code more beautiful :)");
                     }
                     else
                     {
-                        GameDict.Add(chatId, new Game());
+                        GameDict.Add(chatId, new Game(telegramId, firstName));
                         await Bot.SendTextMessageAsync(chatId, GameDict[chatId].IsItRunning());
                     }
                 } else if (messageText.StartsWith("/start")) {
@@ -73,3 +77,5 @@ namespace ConsoleApplication2
             "In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\nHere is the command list.\r\n/joingame = Create new game / Join existing game";
     }
 }
+
+
