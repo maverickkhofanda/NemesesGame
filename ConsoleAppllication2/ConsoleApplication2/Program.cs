@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +13,6 @@ namespace ConsoleApplication2
 {
     class Program
     {
-
         public static Dictionary<long, Game> GameDict = new Dictionary<long, Game>();
             
         private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q");
@@ -22,6 +21,7 @@ namespace ConsoleApplication2
         {
             var me = Bot.GetMeAsync().Result;
             Bot.OnMessage += BotOnMessageReceived;
+
             Bot.StartReceiving();
             Console.ReadLine();
             Bot.StopReceiving();
@@ -34,51 +34,42 @@ namespace ConsoleApplication2
             var chatId = message.Chat.Id;
             var firstName = message.From.FirstName;
             var lastName = message.From.LastName;
-            string commandType = "";
+            string entityType = "";
 
             Console.WriteLine("Message received from " + message.From.FirstName + " at " + chatId);
             try
             {
-                var a = message.Entities.ElementAt(0).Type;
-                commandType = a.ToString();
-                Console.WriteLine("commandType: " + commandType);
+                entityType = message.Entities.ElementAt(0).Type.ToString();
+                
+                Console.WriteLine("entityType: " + entityType);
 
             } catch (Exception e) { }
 
-            switch (commandType)
+            //Command 'cabling'
+            if (entityType == "BotCommand")
             {
-                case "BotCommand":
-                    await Bot.SendTextMessageAsync(chatId, BotCommandReply(messageText, chatId));                    
-                    break;
-                default:
-                    await Bot.SendTextMessageAsync(chatId, "<put command info here>");
-                    break;
-            }
+                if (messageText.StartsWith("/joingame")) {
+                    if (GameDict.ContainsKey(chatId))
+                    {
+                        await Bot.SendTextMessageAsync(chatId, "Join existing game unimplemented yet!");
+                    }
+                    else
+                    {
+                        GameDict.Add(chatId, new Game());
+                        await Bot.SendTextMessageAsync(chatId, GameDict[chatId].IsItRunning());
+                    }
+                } else if (messageText.StartsWith("/start")) {
+                        await Bot.SendTextMessageAsync(chatId,
+                            "Insert player data to database unimplemented yet!\r\n\r\n" + commandInfo);
+                } else {
+                        await Bot.SendTextMessageAsync(chatId, "Command not found!");
+                }
+            } else { await Bot.SendTextMessageAsync(chatId, commandInfo); }
             
             Console.WriteLine("Reply has been sent!");
         }
 
-        private static string BotCommandReply (string commandString, long chatId)
-        {
-            string s;
-            switch(commandString)
-            {
-                case "/NewGame":
-                    s = "New Game command unimplemented yet!";
-                    if (GameDict.ContainsKey(chatId)) {
-                        s = "Game already running!";
-                    } else {
-                        GameDict.Add(chatId, new Game());
-                        s = GameDict[chatId].IsItRunning();
-                    }
-                    break;
-                default:
-                    s = "Command not found!";
-                    break;
-            }
-            return s;
-        }
+        static string commandInfo =
+            "In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\nHere is the command list.\r\n/joingame = Create new game / Join existing game";
     }
 }
-
-
