@@ -1,0 +1,16 @@
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe.config
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.pdb
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\Newtonsoft.Json.dll
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\System.Net.Http.Formatting.dll
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\Telegram.Bot.dll
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\Newtonsoft.Json.xml
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\System.Net.Http.Formatting.xml
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\Telegram.Bot.xml
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.csprojResolveAssemblyReference.cache
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.exe
+D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.pdb
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe.config
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.exe
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.pdb
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\bin\Debug\NemesesGame.exe.config
