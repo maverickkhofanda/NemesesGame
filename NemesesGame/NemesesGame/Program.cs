@@ -55,7 +55,8 @@ namespace NemesesGame
 				{
 					if (GameDict.ContainsKey(chatId))
 					{
-						await Bot.SendTextMessageAsync(chatId, "Join existing game unimplemented yet!");
+						GameDict[chatId].PlayerJoin(senderId, senderName);
+						await Bot.SendTextMessageAsync(chatId, senderName + " joined the game!");
 					}
 					else
 					{
