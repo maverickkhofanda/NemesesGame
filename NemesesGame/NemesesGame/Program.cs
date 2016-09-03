@@ -15,7 +15,7 @@ namespace NemesesGame
     {
         public static Dictionary<long, Game> GameDict = new Dictionary<long, Game>();
             
-        private static readonly TelegramBotClient Bot = new TelegramBotClient("254602224:AAFgJBae5VsFQw34xlWk--qFlKXXX_J3TSk");
+        private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q");
 
         static void Main(string[] args)
         {
@@ -35,10 +35,12 @@ namespace NemesesGame
             var messageText = message.Text;
             var chatId = message.Chat.Id;
 			var senderId = message.From.Id;
-			var senderName = message.From.FirstName + " " + message.From.LastName;
+            var senderFirstName = message.From.FirstName;
+            var senderLastName = message.From.LastName;
+            var senderName = senderFirstName + senderLastName;
             string entityType = "";
 
-            Console.WriteLine("Message received from " + senderName + " (" + senderId + ")" + " at " + chatId);
+            Console.WriteLine("\r\nMessage received from " + senderName + " (" + senderId + ")" + " at " + chatId);
 
             try
             {
@@ -52,26 +54,30 @@ namespace NemesesGame
             if (entityType == "BotCommand")
             {
                 if (messageText.StartsWith("/joingame"))
-				{
-					if (GameDict.ContainsKey(chatId))
-					{
-						await Bot.SendTextMessageAsync(chatId, "Join existing game unimplemented yet!");
-					}
-					else
-					{
-						GameDict.Add(chatId, new Game());
-						GameDict[chatId].PlayerJoin(senderId, senderName);
+                {
+                    string string0;
+                    if (GameDict.ContainsKey(chatId))
+                    {
+                        string0 = GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+                        await Bot.SendTextMessageAsync(chatId, string0);
+                    }
+                    else
+                    {
+                        GameDict.Add(chatId, new Game());
                         await Bot.SendTextMessageAsync(chatId, GameDict[chatId].GameHosted());
+
+                        string0 = GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+                        await Bot.SendTextMessageAsync(chatId, string0);
                     }
                 }
-				else if (messageText.StartsWith("/playerlist"))
+                else if (messageText.StartsWith("/playerlist"))
 				{
 					if (GameDict.ContainsKey(chatId))
 					{
 						int playerCount = GameDict[chatId].PlayerCount;
 						string playerListInfo = playerCount + " players have joined this lobby :";
 
-						foreach (KeyValuePair<long, string> kvp in GameDict[chatId].players)
+						foreach (KeyValuePair<long, City> kvp in GameDict[chatId].players)
 						{
 							playerListInfo += "\r\n" + kvp.Value;
 						}

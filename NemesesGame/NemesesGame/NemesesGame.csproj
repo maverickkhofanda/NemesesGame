@@ -56,9 +56,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="City.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Structs\PlayerDetails.cs" />
+    <Compile Include="Structs\Resources.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
