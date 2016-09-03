@@ -83,6 +83,35 @@ namespace NemesesGame
 						await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
 					}
 				}
+				else if (messageText.StartsWith("/leavegame"))
+				{
+					if (GameDict.ContainsKey(chatId))
+					{
+						if (GameDict[chatId].players.ContainsKey(senderId))
+						{
+							//Remove the player from the lobby, if the player has joined the lobby before
+							GameDict[chatId].PlayerLeave(senderId);
+							await Bot.SendTextMessageAsync(chatId, senderName + " has left the lobby!");
+
+							//If the only player in the lobby left, unhost the lobby
+							if(GameDict[chatId].PlayerCount <= 0)
+							{
+								GameDict.Remove(chatId);
+								await Bot.SendTextMessageAsync(chatId, "Lobby unhosted!");
+							}
+								
+						}
+						else
+						{
+							//Player hasn't joined the lobby, but wants to leave the lobby
+							await Bot.SendTextMessageAsync(chatId, senderName + " hasn't joined the lobby yet!");
+                        }
+					}
+					else
+					{
+						await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
+					}
+				}
 				else if (messageText.StartsWith("/start"))
 				{
 					await Bot.SendTextMessageAsync(chatId, "Insert player data to database unimplemented yet!\r\n\r\n" + gameInfo);
@@ -104,6 +133,7 @@ namespace NemesesGame
 			"In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\n" +
 			"Here is the command list.\r\n" +
 			"/joingame = Create new game / Join existing game\r\n" +
-			"/playerlist = See the list of players who joined the game";
+			"/playerlist = See the list of players who joined the game\r\n" + 
+			"/leavegame = Leave the lobby";
     }
 }
