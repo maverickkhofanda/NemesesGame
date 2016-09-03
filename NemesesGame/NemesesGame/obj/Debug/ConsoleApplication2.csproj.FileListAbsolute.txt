@@ -10,3 +10,7 @@ D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\bin\Debug\Telegram.
 D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.csprojResolveAssemblyReference.cache
 D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.exe
 D:\Documents\Nemeses\ConsoleApplication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.pdb
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\bin\Debug\ConsoleApplication2.exe.config
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.exe
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\obj\Debug\ConsoleApplication2.pdb
+E:\Projects\NemesesGame-master\ConsoleAppllication2\ConsoleApplication2\bin\Debug\NemesesGame.exe.config
