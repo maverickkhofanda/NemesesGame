@@ -37,7 +37,7 @@ namespace NemesesGame
 			var senderId = message.From.Id;
             var senderFirstName = message.From.FirstName;
             var senderLastName = message.From.LastName;
-            var senderName = senderFirstName + senderLastName;
+            var senderName = senderFirstName + " " + senderLastName;
             string entityType = "";
 
             Console.WriteLine("\r\nMessage received from " + senderName + " (" + senderId + ")" + " at " + chatId);
@@ -55,21 +55,28 @@ namespace NemesesGame
             {
                 if (messageText.StartsWith("/joingame"))
                 {
-                    string string0;
-                    if (GameDict.ContainsKey(chatId))
-                    {
-                        string0 = GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-                        await Bot.SendTextMessageAsync(chatId, string0);
-                    }
-                    else
-                    {
-                        GameDict.Add(chatId, new Game());
-                        await Bot.SendTextMessageAsync(chatId, GameDict[chatId].GameHosted());
+					if (GameDict.ContainsKey(chatId))
+					{
+						if (GameDict[chatId].players.ContainsKey(senderId))
+						{
+							await Bot.SendTextMessageAsync(chatId, senderFirstName + " ALREADY joined the game!\n\rStahp confusing the bot :(");
+						}
+						else
+						{
+							GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
 
-                        string0 = GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-                        await Bot.SendTextMessageAsync(chatId, string0);
-                    }
-                }
+							await Bot.SendTextMessageAsync(chatId, senderName + " joined the game!");
+						}
+					}
+					else
+					{
+						GameDict.Add(chatId, new Game());
+						GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+
+						await Bot.SendTextMessageAsync(chatId, GameDict[chatId].GameHosted());
+						await Bot.SendTextMessageAsync(chatId, senderName + " joined the game!");
+					}
+				}
                 else if (messageText.StartsWith("/playerlist"))
 				{
 					if (GameDict.ContainsKey(chatId))
@@ -79,9 +86,38 @@ namespace NemesesGame
 
 						foreach (KeyValuePair<long, City> kvp in GameDict[chatId].players)
 						{
-							playerListInfo += "\r\n" + kvp.Value;
+							playerListInfo += "\r\n" + kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName;
 						}
 						await Bot.SendTextMessageAsync(chatId, playerListInfo);
+					}
+					else
+					{
+						await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
+					}
+				}
+				else if (messageText.StartsWith("/leavegame"))
+				{
+					if (GameDict.ContainsKey(chatId))
+					{
+						if (GameDict[chatId].players.ContainsKey(senderId))
+						{
+							//Remove the player from the lobby, if the player has joined the lobby before
+							GameDict[chatId].PlayerLeave(senderId);
+							await Bot.SendTextMessageAsync(chatId, senderName + " has left the lobby!");
+
+							//If the only player in the lobby left, unhost the lobby
+							if (GameDict[chatId].PlayerCount <= 0)
+							{
+								GameDict.Remove(chatId);
+								await Bot.SendTextMessageAsync(chatId, "Lobby unhosted!");
+							}
+
+						}
+						else
+						{
+							//Player hasn't joined the lobby, but wants to leave the lobby
+							await Bot.SendTextMessageAsync(chatId, senderName + " hasn't joined the lobby yet!");
+						}
 					}
 					else
 					{
@@ -109,6 +145,7 @@ namespace NemesesGame
 			"In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\n" +
 			"Here is the command list.\r\n" +
 			"/joingame = Create new game / Join existing game\r\n" +
-			"/playerlist = See the list of players who joined the game";
+			"/playerlist = See the list of players who joined the game" + 
+			"/leavegame = Leave the lobby";
     }
 }

@@ -25,19 +25,16 @@ namespace NemesesGame
             return "New game is made in this lobby!";
         }
 
-		public string PlayerJoin(long TelegramId, string FirstName, string LastName)
+		public void PlayerJoin(long telegramId, string firstName, string lastName)
 		{
-            string s;
-            if (players.ContainsKey(TelegramId))
-            {
-                s = FirstName + " ALREADY joined the game!\n\rStahp confusing the bot :(";
-            } else
-            {
-                players.Add(TelegramId, new NemesesGame.City(TelegramId, FirstName, LastName));
-                s = players[TelegramId].ThisPlayer();
-            }
+			players.Add(telegramId, new City(telegramId, firstName, lastName));
+			playerCount++;
+		}
 
-            return s;
+		public void PlayerLeave(long telegramId)
+		{
+			players.Remove(telegramId);
+			playerCount--;
 		}
 
 		public int PlayerCount { get { return playerCount; } }

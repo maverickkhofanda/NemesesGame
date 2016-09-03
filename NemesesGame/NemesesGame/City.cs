@@ -17,18 +17,9 @@ namespace NemesesGame
          * public Upgrades cityUpgrades;
          */
 
-        public City(long TelegramId, string FirstName, string LastName)
+        public City(long telegramId, string firstName, string lastName)
         {
-            playerDetails = new PlayerDetails(TelegramId, FirstName, LastName);
-        }
-
-        public string ThisPlayer()
-        {
-            PlayerDetails p = playerDetails;
-            string s;
-            s = p.firstName + " " + p.lastName + " (" + p.telegramId + ") has joined the game!";
-
-            return s;
+            playerDetails = new PlayerDetails(telegramId, firstName, lastName);
         }
     }
 }
