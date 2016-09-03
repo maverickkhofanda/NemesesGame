@@ -30,6 +30,12 @@ namespace NemesesGame
 			playerCount++;
 		}
 
+		public void PlayerLeave(long senderId)
+		{
+			players.Remove(senderId);
+			playerCount--;
+		}
+
 		public int PlayerCount { get { return playerCount; } }
     }
 }
