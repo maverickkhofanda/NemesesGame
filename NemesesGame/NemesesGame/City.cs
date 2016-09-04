@@ -9,8 +9,12 @@ namespace NemesesGame
 {
     public class City
     {
-        public Resources cityResources = new Resources(2000, 500, 200, 50);
+        public Resources cityResources = new Resources();
+        public Resources resourceRegen = new Resources();
+
+        RefResources refResources = new RefResources();
         public PlayerDetails playerDetails = new PlayerDetails();
+        
 
         /* Unimplemented yet
          * public Army cityArmy;
@@ -20,6 +24,18 @@ namespace NemesesGame
         public City(long telegramId, string firstName, string lastName)
         {
             playerDetails = new PlayerDetails(telegramId, firstName, lastName);
+
+            InitCity();
+            Console.WriteLine("{0}'s current gold = {1} + {2}/turn", playerDetails.firstName, cityResources.Gold, resourceRegen.Gold);
+        }
+
+        /// <summary>
+        /// City initializer
+        /// </summary>
+        void InitCity()
+        {
+            cityResources = refResources.StartingResources;
+            resourceRegen = refResources.ResourcesRegenBasic;
         }
     }
 }

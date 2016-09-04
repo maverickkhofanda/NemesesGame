@@ -49,3 +49,15 @@ D:\Documents\Nemeses\NemesesGame-master\NemesesGame-master\NemesesGame\NemesesGa
 D:\Documents\Nemeses\NemesesGame-master\NemesesGame-master\NemesesGame\NemesesGame\bin\Debug\System.Net.Http.Formatting.xml
 D:\Documents\Nemeses\NemesesGame-master\NemesesGame-master\NemesesGame\NemesesGame\bin\Debug\Telegram.Bot.xml
 D:\Documents\Nemeses\NemesesGame-master\NemesesGame-master\NemesesGame\NemesesGame\obj\Debug\NemesesGame.csprojResolveAssemblyReference.cache
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\NemesesGame.exe.config
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\obj\Debug\NemesesGame.exe
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\obj\Debug\NemesesGame.pdb
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\NemesesGame.exe
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\NemesesGame.pdb
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\Newtonsoft.Json.dll
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\System.Net.Http.Formatting.dll
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\Telegram.Bot.dll
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\Newtonsoft.Json.xml
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\System.Net.Http.Formatting.xml
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\bin\Debug\Telegram.Bot.xml
+D:\Documents\Nemeses\NemesesGame\NemesesGame\NemesesGame\obj\Debug\NemesesGame.csprojResolveAssemblyReference.cache

@@ -10,14 +10,43 @@ namespace NemesesGame
     public class Game
     {
 		private int playerCount = 0;
+        public string chatName;
 
 		private string botReply = "";
 
 		public Dictionary<long, City> players = new Dictionary<long, City>();
 
+        byte turn = 1;
+
         public Game()
         {
+            Console.WriteLine("chatName unassigned yet! chatName: " + chatName);
+        }
 
+        public Game(string ChatName)
+        {
+            chatName = ChatName;
+        }
+
+        public void StartGame()
+        {
+            //note: Private chat to each player unimplemente yet!
+
+            botReply += "Game is starting... Players in game: \r\n";
+
+            foreach (KeyValuePair<long, City> kvp in players)
+            {
+                botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
+            }
+        }
+
+        /// <summary>
+        /// still a STUB
+        /// </summary>
+        public void Turn()
+        {
+            turn++;
+            botReply += "Turn "+turn;
         }
 
         public void GameHosted()  

@@ -35,6 +35,7 @@ namespace NemesesGame
             var message = messageEventArgs.Message;
             var messageText = message.Text;
             var chatId = message.Chat.Id;
+            string chatName = "";
 			var senderId = message.From.Id;
             var senderFirstName = message.From.FirstName;
             var senderLastName = message.From.LastName;
@@ -46,6 +47,7 @@ namespace NemesesGame
             try
             {
                 entityType = message.Entities.ElementAt(0).Type.ToString();
+                chatName = message.Chat.Title;
                 
                 Console.WriteLine("entityType: " + entityType);
 
@@ -60,13 +62,33 @@ namespace NemesesGame
 					if (!GameDict.ContainsKey(chatId))
 					{
 						//If no, make one
-						GameDict.Add(chatId, new Game());
+						GameDict.Add(chatId, new Game(chatName));
 					}
 					//Join the lobby
 					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
 
 					await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 				}
+                else if (messageText.StartsWith("/startgame"))
+                {
+                    if (GameDict.ContainsKey(chatId))
+                    {
+                        GameDict[chatId].StartGame();
+                        await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
+
+                        //chat each player privately: UNIMPLEMENTED YET
+                        /*
+                            foreach (KeyValuePair<long, City> player in GameDict[chatId].players)
+                            {
+                                await Bot.SendTextMessageAsync(senderId, GameDict[chatId].PrivateReply());
+                            }
+                        */
+                    }
+                    else
+                    {
+                        await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
+                    }
+                }
                 else if (messageText.StartsWith("/playerlist"))
 				{
 					if (GameDict.ContainsKey(chatId))
