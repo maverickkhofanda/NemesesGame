@@ -14,10 +14,11 @@ namespace NemesesGame
     class Program
     {
         public static Dictionary<long, Game> GameDict = new Dictionary<long, Game>();
-            
-        private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q");
 
-        static void Main(string[] args)
+		private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q"); //NemesesBot
+		//private static readonly TelegramBotClient Bot = new TelegramBotClient("254602224:AAFgJBae5VsFQw34xlWk--qFlKXXX_J3TSk"); //SeaOfEdenBot
+
+		static void Main(string[] args)
         {
             var me = Bot.GetMeAsync().Result;
             Bot.OnMessage += BotOnMessageReceived;
@@ -55,40 +56,24 @@ namespace NemesesGame
             {
                 if (messageText.StartsWith("/joingame"))
                 {
-					if (GameDict.ContainsKey(chatId))
+					//Check if there is a lobby for that chatId
+					if (!GameDict.ContainsKey(chatId))
 					{
-						if (GameDict[chatId].players.ContainsKey(senderId))
-						{
-							await Bot.SendTextMessageAsync(chatId, senderFirstName + " ALREADY joined the game!\n\rStahp confusing the bot :(");
-						}
-						else
-						{
-							GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-
-							await Bot.SendTextMessageAsync(chatId, senderName + " joined the game!");
-						}
-					}
-					else
-					{
+						//If no, make one
 						GameDict.Add(chatId, new Game());
-						GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-
-						await Bot.SendTextMessageAsync(chatId, GameDict[chatId].GameHosted());
-						await Bot.SendTextMessageAsync(chatId, senderName + " joined the game!");
 					}
+					//Join the lobby
+					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+
+					await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 				}
                 else if (messageText.StartsWith("/playerlist"))
 				{
 					if (GameDict.ContainsKey(chatId))
 					{
-						int playerCount = GameDict[chatId].PlayerCount;
-						string playerListInfo = playerCount + " players have joined this lobby :";
+						GameDict[chatId].PlayerList();
 
-						foreach (KeyValuePair<long, City> kvp in GameDict[chatId].players)
-						{
-							playerListInfo += "\r\n" + kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName;
-						}
-						await Bot.SendTextMessageAsync(chatId, playerListInfo);
+						await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 					}
 					else
 					{
@@ -99,24 +84,15 @@ namespace NemesesGame
 				{
 					if (GameDict.ContainsKey(chatId))
 					{
-						if (GameDict[chatId].players.ContainsKey(senderId))
-						{
-							//Remove the player from the lobby, if the player has joined the lobby before
-							GameDict[chatId].PlayerLeave(senderId);
-							await Bot.SendTextMessageAsync(chatId, senderName + " has left the lobby!");
+						GameDict[chatId].PlayerLeave(senderId, senderFirstName, senderLastName);
 
-							//If the only player in the lobby left, unhost the lobby
-							if (GameDict[chatId].PlayerCount <= 0)
-							{
-								GameDict.Remove(chatId);
-								await Bot.SendTextMessageAsync(chatId, "Lobby unhosted!");
-							}
-
-						}
-						else
+						if (GameDict[chatId].PlayerCount <= 0)
 						{
-							//Player hasn't joined the lobby, but wants to leave the lobby
-							await Bot.SendTextMessageAsync(chatId, senderName + " hasn't joined the lobby yet!");
+							GameDict[chatId].GameUnhosted();
+
+							await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
+
+							GameDict.Remove(chatId);
 						}
 					}
 					else
@@ -145,7 +121,7 @@ namespace NemesesGame
 			"In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\n" +
 			"Here is the command list.\r\n" +
 			"/joingame = Create new game / Join existing game\r\n" +
-			"/playerlist = See the list of players who joined the game" + 
+			"/playerlist = See the list of players who joined the game\r\n" + 
 			"/leavegame = Leave the lobby";
     }
 }
