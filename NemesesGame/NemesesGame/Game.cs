@@ -13,6 +13,7 @@ namespace NemesesGame
         public string chatName;
 
 		private string botReply = "";
+        private string privateReply = "";
 
 		public Dictionary<long, City> players = new Dictionary<long, City>();
 
@@ -36,7 +37,23 @@ namespace NemesesGame
 
             foreach (KeyValuePair<long, City> kvp in players)
             {
-                botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
+                City city = kvp.Value;
+                botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
+                privateReply += String.Format(
+                    "You are the President {0} of Republic City. Your current resources:\n\r"
+                    + "Gold: {1} + {2}\n\r"
+                    + "Wood: {3} + {4}\n\r"
+                    + "Stone: {5} + {6}\n\r"
+                    + "Iron: {7} + {8}",
+                    
+                    city.playerDetails.firstName,
+                    city.cityResources.Gold, city.resourceRegen.Gold,
+                    city.cityResources.Wood, city.resourceRegen.Wood,
+                    city.cityResources.Stone, city.resourceRegen.Stone,
+                    city.cityResources.Iron, city.resourceRegen.Iron);
+                Program.SendMessage(kvp.Key, privateReply);
+                privateReply = "";
+                
             }
         }
 

@@ -53,7 +53,7 @@ namespace NemesesGame
 
             } catch (Exception e) { }
 
-            //Command 'cabling'
+            // Check if the message is a BotCommand, then implement it
             if (entityType == "BotCommand")
             {
                 if (messageText.StartsWith("/joingame"))
@@ -73,16 +73,10 @@ namespace NemesesGame
                 {
                     if (GameDict.ContainsKey(chatId))
                     {
+                        
                         GameDict[chatId].StartGame();
                         await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 
-                        //chat each player privately: UNIMPLEMENTED YET
-                        /*
-                            foreach (KeyValuePair<long, City> player in GameDict[chatId].players)
-                            {
-                                await Bot.SendTextMessageAsync(senderId, GameDict[chatId].PrivateReply());
-                            }
-                        */
                     }
                     else
                     {
@@ -136,7 +130,12 @@ namespace NemesesGame
 				await Bot.SendTextMessageAsync(chatId, gameInfo);
 			}
             
-            Console.WriteLine("Reply has been sent!");
+            Console.WriteLine("Reply to " + senderFirstName + " has been sent!");
+        }
+
+        public static async void SendMessage(long chatId, string messageContent)
+        {
+            await Bot.SendTextMessageAsync(chatId, messageContent);
         }
 
 		static string gameInfo =
