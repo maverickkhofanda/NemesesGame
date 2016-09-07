@@ -73,7 +73,7 @@ namespace NemesesGame
             {
                 entityType = message.Entities.ElementAt(0).Type.ToString();
 
-                if(message.Chat.Type != ChatType.Private)
+                if(message.Chat.Type == ChatType.Private)
                 {
                     chatName = senderFirstName;
                 } else
