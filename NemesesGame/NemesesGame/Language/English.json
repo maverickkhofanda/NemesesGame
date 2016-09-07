@@ -1,7 +1,0 @@
-{
-	"langauge" : "English", 
-	"events" : [
-		"StartGame" : 
-			"You are the President of {0} state. Current resources: \n\r"
-	]
-}

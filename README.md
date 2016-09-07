@@ -15,7 +15,5 @@ Additional Features:
 1. Merchant
 2. Tech
 3! Ult Tech
-
-
-[Game.cs](/ConsoleAppllication2/ConsoleApplication2/Game.cs) contains the Game
-and [Program.cs](NemesesGame/ConsoleAppllication2/ConsoleApplication2/Program.cs) is the main executable
+4. Settings (need sql)
+5. Skills (for each city)

@@ -1,0 +1,20 @@
+{
+	"langauge" : "English", 
+	"events" : 
+		{
+		"tester" : "This is a tester",
+		"StartGame": "You are the President of {0} state. Current resources: \n\r",
+		"CurrentResources" : [
+			"Your current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r", 
+			"{0}'s current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r"
+			],
+		"ArrayTester" : [
+			"This is index 0",
+			"This is index 1",
+			"This is index 2",
+			"This is index 3",
+			"This is index 4",
+			"This is index 5",
+		]
+		}	
+}

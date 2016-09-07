@@ -26,7 +26,6 @@ namespace NemesesGame
             playerDetails = new PlayerDetails(telegramId, firstName, lastName);
 
             InitCity();
-            Console.WriteLine("{0}'s current gold = {1} + {2}/turn", playerDetails.firstName, cityResources.Gold, resourceRegen.Gold);
         }
 
         /// <summary>

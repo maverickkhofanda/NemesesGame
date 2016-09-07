@@ -8,12 +8,31 @@ using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using NemesesGame;
+using System.Reflection;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace NemesesGame
 {
     class Program
     {
         public static Dictionary<long, Game> GameDict = new Dictionary<long, Game>();
+
+        public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>();
+        public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
+        static string langaugeDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
+
+        public static string rootDirectory
+        {
+            get
+            {
+                string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                UriBuilder uri = new UriBuilder(codeBase);
+                string path = Uri.UnescapeDataString(uri.Path);
+                return Path.GetDirectoryName(path);
+            }
+        }
 
 		private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q"); //NemesesBot
 		//private static readonly TelegramBotClient Bot = new TelegramBotClient("254602224:AAFgJBae5VsFQw34xlWk--qFlKXXX_J3TSk"); //SeaOfEdenBot
@@ -23,9 +42,15 @@ namespace NemesesGame
             var me = Bot.GetMeAsync().Result;
             Bot.OnMessage += BotOnMessageReceived;
 
+            LoadLanguage();
+
 			Console.Title = me.Username;
 
             Bot.StartReceiving();
+
+            //debug send language
+            SendMessage(-172612224, GetLangString(-172612224, "ArrayTester"));
+
             Console.ReadLine();
             Bot.StopReceiving();
         }
@@ -47,11 +72,15 @@ namespace NemesesGame
             try
             {
                 entityType = message.Entities.ElementAt(0).Type.ToString();
-                chatName = message.Chat.Title;
-                
-                Console.WriteLine("entityType: " + entityType);
 
-            } catch (Exception e) { }
+                if(message.Chat.Type != ChatType.Private)
+                {
+                    chatName = senderFirstName;
+                } else
+                {
+                    chatName = message.Chat.Title;
+                }
+            } catch { }
 
             // Check if the message is a BotCommand, then implement it
             if (entityType == "BotCommand")
@@ -130,7 +159,93 @@ namespace NemesesGame
 				await Bot.SendTextMessageAsync(chatId, gameInfo);
 			}
             
-            Console.WriteLine("Reply to " + senderFirstName + " has been sent!");
+            Console.WriteLine("Reply to " + chatName + " has been sent!");
+        }
+
+        public static void LoadLanguage()
+        {
+            try
+            {
+                var files = Directory.GetFiles(langaugeDirectory);
+                foreach (string file in files)
+                {
+                    string languageName = Path.GetFileNameWithoutExtension(file);
+
+                    using (TextReader tr = System.IO.File.OpenText(file))
+                    {
+                        using (JsonTextReader jtr = new JsonTextReader(tr))
+                        {
+                            langFiles.Add(languageName, (JObject)JToken.ReadFrom(jtr));
+                            //Console.WriteLine(languageFile.ToString());
+
+                            Console.WriteLine("Loading language: " + languageName);
+                        }
+                    }
+                }
+            }
+            catch (Exception e) { Console.WriteLine(e); }
+        }
+        public static string GetLangString(long chatId, string key, params object[] args)
+        {
+            string output;
+
+            try
+            {
+                JToken events;
+
+                if (!groupLangPref.ContainsKey(chatId))
+                {
+                    events = langFiles["English"].SelectToken("events");
+                }
+                else
+                {
+                    string thisLangPref = groupLangPref[chatId];
+                    events = langFiles[thisLangPref].SelectToken("events");
+                }
+
+                var token = events.SelectToken(key);
+
+                if (token != null)
+                {
+                    if (token.Type == JTokenType.Array)
+                    {
+                        JArray array = (JArray)token;
+
+                        //randomize
+                        int arrayCount = array.Count();
+                        Random rnd = new Random();
+                        int i = rnd.Next(0, arrayCount);
+
+                        Console.WriteLine("arrayCount: " + arrayCount);
+                        Console.WriteLine("Output on index: " + i);
+
+                        output = token[i].ToString();
+
+                        return output;
+                    }
+                    else if (token.Type == JTokenType.String)
+                    {
+                        output = token.ToString();
+                        return output;
+                    }
+
+                    Console.WriteLine("Error GetLangString(): No definition for type" + token.Type);
+                    output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\rThanks";
+
+                    return output;
+                }
+                else
+                {
+                    output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\rThanks";
+                    return output;
+
+                    throw new Exception($"Error getting string {key} with parameters {args.Aggregate((a, b) => a + "," + b.ToString())}");
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Error getting string {key} with parameters {args.Aggregate((a, b) => a + "," + b.ToString())}", e);
+            }
         }
 
         public static async void SendMessage(long chatId, string messageContent)

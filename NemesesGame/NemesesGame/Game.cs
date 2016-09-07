@@ -9,12 +9,12 @@ namespace NemesesGame
 {
     public class Game
     {
-		private int playerCount = 0;
+        private int playerCount = 0;
         public string chatName;
 
 		private string botReply = "";
         private string privateReply = "";
-
+        
 		public Dictionary<long, City> players = new Dictionary<long, City>();
 
         byte turn = 1;
@@ -39,7 +39,7 @@ namespace NemesesGame
             {
                 City city = kvp.Value;
                 botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
-                privateReply += String.Format(
+                privateReply += string.Format(
                     "You are the President {0} of Republic City. Your current resources:\n\r"
                     + "Gold: {1} + {2}\n\r"
                     + "Wood: {3} + {4}\n\r"
@@ -53,10 +53,9 @@ namespace NemesesGame
                     city.cityResources.Iron, city.resourceRegen.Iron);
                 Program.SendMessage(kvp.Key, privateReply);
                 privateReply = "";
-                
             }
         }
-
+        
         /// <summary>
         /// still a STUB
         /// </summary>
