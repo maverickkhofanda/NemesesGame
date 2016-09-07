@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Timers;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,41 +13,63 @@ namespace NemesesGame
         private int playerCount = 0;
         public long chatId;
         public string chatName;
+        Timer _delayTimer;
 
-		private string botReply = "";
-        private string privateReply = "";
+        string botReply = "";
+        string privateReply = "";
         
         public Dictionary<long, City> players = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
-        byte turn = 1;
-
-        public Game()
-        {
-            Console.WriteLine("chatName & chatId unassigned yet!");
-        }
-
-
+        byte _turn;
+        public byte _Turn { get { return _turn; } }
+        
         public Game(long ChatId, string ChatName)
         {
             chatId = ChatId;
             chatName = ChatName;
         }
 
+        private void GameTimer()
+        {
+            
+        }
+
         public void StartGame()
         {
-            //note: Private chat to each player unimplemente yet!
+            //note: Private chat to each player unimplemented yet!
 
-            botReply += "Game is starting... Players in game: \r\n";
-
+            botReply += "Game is starting... Please choose your name in private chat\r\n";
+            
             foreach (KeyValuePair<long, City> kvp in players)
             {
                 City city = kvp.Value;
-                botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
+
+                city.isChoosingName = true;
+                Program.SendMessage(kvp.Key, Program.GetLangString(chatId, "ChooseName"));
+            }
+
+            _turn = 0;
+
+            //wait for 15 sec
+            _delayTimer = new Timer();
+            _delayTimer.Interval = 15000;
+            _delayTimer.Elapsed += StartGameBroadcast;
+            _delayTimer.Start();
+        }
+        
+        void StartGameBroadcast(object sender, ElapsedEventArgs e)
+        {
+            foreach (KeyValuePair<long, City> kvp in players)
+            {
+                City city = kvp.Value;
+                long playerId = city.playerDetails.telegramId;
+
+                botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + " as the president of " + city.playerDetails.cityName + "\r\n";
                 privateReply += string.Format(Program.GetLangString(chatId, "StartGame", city.playerDetails.cityName));
                 privateReply += string.Format(
                     Program.GetLangString(chatId, "CurrentResources",
-                    
+
                     city.playerDetails.cityName,
                     city.cityResources.Gold, city.resourceRegen.Gold,
                     city.cityResources.Wood, city.resourceRegen.Wood,
@@ -56,14 +79,14 @@ namespace NemesesGame
                 privateReply = "";
             }
         }
-        
+
         /// <summary>
         /// still a STUB
         /// </summary>
         public void Turn()
         {
-            turn++;
-            botReply += "Turn "+turn;
+            _turn++;
+            botReply += "Turn "+_turn;
         }
 
         public void GameHosted()  
@@ -158,5 +181,15 @@ namespace NemesesGame
 			return messageToSend;
 
 		}
+
+        public void SetCityName(long PlayerId, string CityName)
+        {
+            if (players[PlayerId].isChoosingName == true)
+            {
+                players[PlayerId].playerDetails.cityName = CityName;
+                Console.WriteLine(PlayerId + "'s city name: " + players[PlayerId].playerDetails.cityName);
+                players[PlayerId].isChoosingName = false;
+            }
+        }
     }
 }

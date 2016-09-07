@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
@@ -21,7 +22,8 @@ namespace NemesesGame
 
         public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>();
         public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
-        static string languageDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
+        static string languageDirectory = Path.GetFullPath(Path.Combine(rootDirectory, @"..\Language"));
+        static Timer _timer;
 
         public static string rootDirectory
         {
@@ -42,9 +44,13 @@ namespace NemesesGame
             var me = Bot.GetMeAsync().Result;
             Bot.OnMessage += BotOnMessageReceived;
 
+            // start loading...
             LoadLanguage();
 
-			Console.Title = me.Username;
+            
+            // finished loading!
+
+            Console.Title = me.Username;
 
             Bot.StartReceiving();
 
@@ -154,6 +160,13 @@ namespace NemesesGame
                     await Bot.SendTextMessageAsync(chatId, "Command not found!");
                 }
             }
+            else if (message.Chat.Type == ChatType.Group)
+            {
+                if (GameDict[chatId]._Turn == 0)
+                {
+                    GameDict[chatId].SetCityName(senderId, messageText);
+                }
+            }
 			else
 			{
 				await Bot.SendTextMessageAsync(chatId, gameInfo);
@@ -185,7 +198,7 @@ namespace NemesesGame
             }
             catch (Exception e) { Console.WriteLine(e); }
         }
-        public static string GetLangString(long chatId, string key, params object[] args)
+        public static string GetLangString(long groupChatId, string key, params object[] args)
         {
             string output;
 
@@ -193,13 +206,13 @@ namespace NemesesGame
             {
                 JToken events;
 
-                if (!groupLangPref.ContainsKey(chatId))
+                if (!groupLangPref.ContainsKey(groupChatId))
                 {
                     events = langFiles["English"].SelectToken("events");
                 }
                 else
                 {
-                    string thisLangPref = groupLangPref[chatId];
+                    string thisLangPref = groupLangPref[groupChatId];
                     events = langFiles[thisLangPref].SelectToken("events");
                 }
 
