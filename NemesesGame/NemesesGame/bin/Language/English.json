@@ -8,6 +8,7 @@
 			"Republic {0} current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r", 
 			"{0}'s current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r"
 			],
+		"ChooseName" : "Please type in your city's name for 15 seconds",
 		"ArrayTester" : [
 			"Tester Array: index 0",
 			"Tester Array: index 1",

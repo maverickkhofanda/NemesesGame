@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Timers;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Telegram.Bot.Types.ReplyMarkups;
 using NemesesGame;
 
 namespace NemesesGame
@@ -13,72 +13,90 @@ namespace NemesesGame
         private int playerCount = 0;
         public long chatId;
         public string chatName;
+        Timer _delayTimer;
 
-		private string botReply = "";
-        private string privateReply = "";
+        string botReply = "";
+        string privateReply = "";
         
         public Dictionary<long, City> players = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
-        byte turn = 1;
-
-        public Game()
-        {
-            Console.WriteLine("chatName & chatId unassigned yet!");
-        }
-
-
+        byte _turn;
+        public byte _Turn { get { return _turn; } }
+        
         public Game(long ChatId, string ChatName)
         {
             chatId = ChatId;
             chatName = ChatName;
         }
 
+        private void GameTimer()
+        {
+            
+        }
+
         public void StartGame()
         {
-            //note: Private chat to each player unimplemente yet!
+            //note: Private chat to each player unimplemented yet!
 
-            botReply += "Game is starting... Players in game: \r\n";
-
+            botReply += "Game is starting... Please choose your name in private chat\r\n";
+            
             foreach (KeyValuePair<long, City> kvp in players)
             {
                 City city = kvp.Value;
-                botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
+
+                city.isChoosingName = true;
+                Program.SendMessage(kvp.Key, Program.GetLangString(chatId, "ChooseName"));
+            }
+
+            _turn = 0;
+
+            //wait for 15 sec
+            _delayTimer = new Timer();
+            _delayTimer.Interval = 15000;
+            _delayTimer.Elapsed += StartGameBroadcast;
+            _delayTimer.Start();
+        }
+        
+        void StartGameBroadcast(object sender, ElapsedEventArgs e)
+        {
+            foreach (KeyValuePair<long, City> kvp in players)
+            {
+                City city = kvp.Value;
+                long playerId = city.playerDetails.telegramId;
+
+                botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + " as the president of " + city.playerDetails.cityName + "\r\n";
                 privateReply += string.Format(Program.GetLangString(chatId, "StartGame", city.playerDetails.cityName));
                 privateReply += string.Format(
                     Program.GetLangString(chatId, "CurrentResources",
-                    
+
                     city.playerDetails.cityName,
                     city.cityResources.Gold, city.resourceRegen.Gold,
                     city.cityResources.Wood, city.resourceRegen.Wood,
                     city.cityResources.Stone, city.resourceRegen.Stone,
                     city.cityResources.Iron, city.resourceRegen.Iron));
-				BotReply(kvp.Key, ref privateReply);
+                Program.SendMessage(kvp.Key, privateReply);
+                privateReply = "";
             }
+        }
 
-			BotReply(chatId, ref botReply);
-		}
-        
         /// <summary>
         /// still a STUB
         /// </summary>
         public void Turn()
         {
-            turn++;
-            botReply += "Turn "+turn;
-			BotReply(chatId, ref botReply);
-		}
+            _turn++;
+            botReply += "Turn "+_turn;
+        }
 
         public void GameHosted()  
         {
             botReply += "New game is made in this lobby!\r\n";
-			BotReply(chatId, ref botReply);
-		}
+        }
 
 		public void GameUnhosted()
 		{
 			botReply += "Lobby unhosted!\r\n";
-			BotReply(chatId, ref botReply);
 		}
 
 		public bool PlayerCheck(long telegramId, string firstName, string lastName)
@@ -114,12 +132,10 @@ namespace NemesesGame
 				}
 
 				botReply += firstName + " " + lastName + " has joined the game!\r\n";
-				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " ALREADY joined the game!\n\rStahp confusing the bot :(\r\n";
-				BotReply(chatId, ref botReply);
 			}
 		}
 
@@ -133,13 +149,10 @@ namespace NemesesGame
 				{
 					botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
 				}
-
-				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!\r\n";
-				BotReply(chatId, ref botReply);
 			}
 		}
 
@@ -151,21 +164,32 @@ namespace NemesesGame
 				playerCount--;
 
 				botReply += firstName + " " + lastName + " has left the lobby!\r\n";
-				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " " + lastName + " hasn't join the lobby yet!\r\n";
-				BotReply(chatId, ref botReply);
 			}
 		}
 
 		public int PlayerCount { get { return playerCount; } }
 
-		public void BotReply(long chatId, ref string message, IReplyMarkup replyMarkup = null)
+		public string BotReply()
 		{
-			Program.SendMessage(chatId, message, replyMarkup);
-			message = ""; //Reset botReply string
+			string messageToSend = botReply;
+			botReply = ""; //Reset botReply string
+
+			return messageToSend;
+
 		}
+
+        public void SetCityName(long PlayerId, string CityName)
+        {
+            if (players[PlayerId].isChoosingName == true)
+            {
+                players[PlayerId].playerDetails.cityName = CityName;
+                Console.WriteLine(PlayerId + "'s city name: " + players[PlayerId].playerDetails.cityName);
+                players[PlayerId].isChoosingName = false;
+            }
+        }
     }
 }

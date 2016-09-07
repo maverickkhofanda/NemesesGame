@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 using NemesesGame;
 using System.Reflection;
 using System.IO;
@@ -22,7 +22,8 @@ namespace NemesesGame
 
         public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>();
         public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
-        static string languageDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
+        static string languageDirectory = Path.GetFullPath(Path.Combine(rootDirectory, @"..\Language"));
+        static Timer _timer;
 
         public static string rootDirectory
         {
@@ -43,9 +44,13 @@ namespace NemesesGame
             var me = Bot.GetMeAsync().Result;
             Bot.OnMessage += BotOnMessageReceived;
 
+            // start loading...
             LoadLanguage();
 
-			Console.Title = me.Username;
+            
+            // finished loading!
+
+            Console.Title = me.Username;
 
             Bot.StartReceiving();
 
@@ -96,12 +101,17 @@ namespace NemesesGame
 					}
 					//Join the lobby
 					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+
+					await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 				}
                 else if (messageText.StartsWith("/startgame"))
                 {
                     if (GameDict.ContainsKey(chatId))
                     {
+                        
                         GameDict[chatId].StartGame();
+                        await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
+
                     }
                     else
                     {
@@ -113,6 +123,8 @@ namespace NemesesGame
 					if (GameDict.ContainsKey(chatId))
 					{
 						GameDict[chatId].PlayerList();
+
+						await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 					}
 					else
 					{
@@ -129,6 +141,8 @@ namespace NemesesGame
 						{
 							GameDict[chatId].GameUnhosted();
 
+							await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
+
 							GameDict.Remove(chatId);
 						}
 					}
@@ -144,6 +158,13 @@ namespace NemesesGame
 				else
 				{
                     await Bot.SendTextMessageAsync(chatId, "Command not found!");
+                }
+            }
+            else if (message.Chat.Type == ChatType.Group)
+            {
+                if (GameDict[chatId]._Turn == 0)
+                {
+                    GameDict[chatId].SetCityName(senderId, messageText);
                 }
             }
 			else
@@ -177,7 +198,7 @@ namespace NemesesGame
             }
             catch (Exception e) { Console.WriteLine(e); }
         }
-        public static string GetLangString(long chatId, string key, params object[] args)
+        public static string GetLangString(long groupChatId, string key, params object[] args)
         {
             string output;
 
@@ -185,13 +206,13 @@ namespace NemesesGame
             {
                 JToken events;
 
-                if (!groupLangPref.ContainsKey(chatId))
+                if (!groupLangPref.ContainsKey(groupChatId))
                 {
                     events = langFiles["English"].SelectToken("events");
                 }
                 else
                 {
-                    string thisLangPref = groupLangPref[chatId];
+                    string thisLangPref = groupLangPref[groupChatId];
                     events = langFiles[thisLangPref].SelectToken("events");
                 }
 
@@ -240,12 +261,12 @@ namespace NemesesGame
             }
         }
 
-		public static async void SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null)
-		{
-			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup);
-		}
+        public static async void SendMessage(long chatId, string messageContent)
+        {
+            await Bot.SendTextMessageAsync(chatId, messageContent);
+        }
 
-		public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
+        public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
         {
             T[] newIndicesArray = new T[thisArray.Length - 1];
 
