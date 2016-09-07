@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types.ReplyMarkups;
 using NemesesGame;
 
 namespace NemesesGame
@@ -52,10 +53,11 @@ namespace NemesesGame
                     city.cityResources.Wood, city.resourceRegen.Wood,
                     city.cityResources.Stone, city.resourceRegen.Stone,
                     city.cityResources.Iron, city.resourceRegen.Iron));
-                Program.SendMessage(kvp.Key, privateReply);
-                privateReply = "";
+				BotReply(kvp.Key, ref privateReply);
             }
-        }
+
+			BotReply(chatId, ref botReply);
+		}
         
         /// <summary>
         /// still a STUB
@@ -64,16 +66,19 @@ namespace NemesesGame
         {
             turn++;
             botReply += "Turn "+turn;
-        }
+			BotReply(chatId, ref botReply);
+		}
 
         public void GameHosted()  
         {
             botReply += "New game is made in this lobby!\r\n";
-        }
+			BotReply(chatId, ref botReply);
+		}
 
 		public void GameUnhosted()
 		{
 			botReply += "Lobby unhosted!\r\n";
+			BotReply(chatId, ref botReply);
 		}
 
 		public bool PlayerCheck(long telegramId, string firstName, string lastName)
@@ -109,10 +114,12 @@ namespace NemesesGame
 				}
 
 				botReply += firstName + " " + lastName + " has joined the game!\r\n";
+				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " ALREADY joined the game!\n\rStahp confusing the bot :(\r\n";
+				BotReply(chatId, ref botReply);
 			}
 		}
 
@@ -126,10 +133,13 @@ namespace NemesesGame
 				{
 					botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
 				}
+
+				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!\r\n";
+				BotReply(chatId, ref botReply);
 			}
 		}
 
@@ -141,22 +151,21 @@ namespace NemesesGame
 				playerCount--;
 
 				botReply += firstName + " " + lastName + " has left the lobby!\r\n";
+				BotReply(chatId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " " + lastName + " hasn't join the lobby yet!\r\n";
+				BotReply(chatId, ref botReply);
 			}
 		}
 
 		public int PlayerCount { get { return playerCount; } }
 
-		public string BotReply()
+		public void BotReply(long chatId, ref string message, IReplyMarkup replyMarkup = null)
 		{
-			string messageToSend = botReply;
-			botReply = ""; //Reset botReply string
-
-			return messageToSend;
-
+			Program.SendMessage(chatId, message, replyMarkup);
+			message = ""; //Reset botReply string
 		}
     }
 }

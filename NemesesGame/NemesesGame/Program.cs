@@ -7,6 +7,7 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using NemesesGame;
 using System.Reflection;
 using System.IO;
@@ -95,17 +96,12 @@ namespace NemesesGame
 					}
 					//Join the lobby
 					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-
-					await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 				}
                 else if (messageText.StartsWith("/startgame"))
                 {
                     if (GameDict.ContainsKey(chatId))
                     {
-                        
                         GameDict[chatId].StartGame();
-                        await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
-
                     }
                     else
                     {
@@ -117,8 +113,6 @@ namespace NemesesGame
 					if (GameDict.ContainsKey(chatId))
 					{
 						GameDict[chatId].PlayerList();
-
-						await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 					}
 					else
 					{
@@ -134,8 +128,6 @@ namespace NemesesGame
 						if (GameDict[chatId].PlayerCount <= 0)
 						{
 							GameDict[chatId].GameUnhosted();
-
-							await Bot.SendTextMessageAsync(chatId, GameDict[chatId].BotReply());
 
 							GameDict.Remove(chatId);
 						}
@@ -248,12 +240,12 @@ namespace NemesesGame
             }
         }
 
-        public static async void SendMessage(long chatId, string messageContent)
-        {
-            await Bot.SendTextMessageAsync(chatId, messageContent);
-        }
+		public static async void SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null)
+		{
+			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup);
+		}
 
-        public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
+		public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
         {
             T[] newIndicesArray = new T[thisArray.Length - 1];
 
