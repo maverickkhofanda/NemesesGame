@@ -9,8 +9,6 @@ namespace NemesesGame
 {
     public class City
     {
-        public bool isChoosingName = false;
-
         public Resources cityResources = new Resources();
         public Resources resourceRegen = new Resources();
 
