@@ -2,7 +2,9 @@
 A turn-based Telegram game
 
 TODO 
-* bikin .json buat referensi Replies
+* Choose City name
+* Turn()
+* change Game.players[] to Game.cities[]
 * gamestatus (NotHosted, Hosted, Started)
 * only able /joingame in Groups
 
