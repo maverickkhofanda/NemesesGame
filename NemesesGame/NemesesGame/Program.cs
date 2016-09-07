@@ -21,7 +21,7 @@ namespace NemesesGame
 
         public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>();
         public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
-        static string langaugeDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
+        static string languageDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
 
         public static string rootDirectory
         {
@@ -49,8 +49,8 @@ namespace NemesesGame
             Bot.StartReceiving();
 
             //debug send language
-            SendMessage(-172612224, GetLangString(-172612224, "ArrayTester"));
-
+            //SendMessage(-172612224, GetLangString(-172612224, "StartGame", "args[0]"));
+            Console.WriteLine("Bot ready!");
             Console.ReadLine();
             Bot.StopReceiving();
         }
@@ -91,7 +91,7 @@ namespace NemesesGame
 					if (!GameDict.ContainsKey(chatId))
 					{
 						//If no, make one
-						GameDict.Add(chatId, new Game(chatName));
+						GameDict.Add(chatId, new Game(chatId, chatName));
 					}
 					//Join the lobby
 					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
@@ -166,7 +166,7 @@ namespace NemesesGame
         {
             try
             {
-                var files = Directory.GetFiles(langaugeDirectory);
+                var files = Directory.GetFiles(languageDirectory);
                 foreach (string file in files)
                 {
                     string languageName = Path.GetFileNameWithoutExtension(file);
@@ -178,7 +178,7 @@ namespace NemesesGame
                             langFiles.Add(languageName, (JObject)JToken.ReadFrom(jtr));
                             //Console.WriteLine(languageFile.ToString());
 
-                            Console.WriteLine("Loading language: " + languageName);
+                            Console.WriteLine("Loaded language: " + languageName);
                         }
                     }
                 }
@@ -219,13 +219,13 @@ namespace NemesesGame
                         Console.WriteLine("arrayCount: " + arrayCount);
                         Console.WriteLine("Output on index: " + i);
 
-                        output = token[i].ToString();
+                        output = string.Format(token[i].ToString(), args);
 
                         return output;
                     }
                     else if (token.Type == JTokenType.String)
                     {
-                        output = token.ToString();
+                        output = string.Format(token.ToString(), args);
                         return output;
                     }
 
@@ -253,7 +253,27 @@ namespace NemesesGame
             await Bot.SendTextMessageAsync(chatId, messageContent);
         }
 
-		static string gameInfo =
+        public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
+        {
+            T[] newIndicesArray = new T[thisArray.Length - 1];
+
+            int i = 0;
+            int j = 0;
+            while (i < thisArray.Length)
+            {
+                if (i != RemoveAt)
+                {
+                    newIndicesArray[j] = thisArray[i];
+                    j++;
+                }
+
+                i++;
+            }
+
+            return newIndicesArray;
+        }
+
+        static string gameInfo =
 			"In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\n" +
 			"Here is the command list.\r\n" +
 			"/joingame = Create new game / Join existing game\r\n" +

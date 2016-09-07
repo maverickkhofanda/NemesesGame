@@ -21,9 +21,9 @@ namespace NemesesGame
          * public Upgrades cityUpgrades;
          */
 
-        public City(long telegramId, string firstName, string lastName)
+        public City(long telegramId, string firstName, string lastName, string cityName)
         {
-            playerDetails = new PlayerDetails(telegramId, firstName, lastName);
+            playerDetails = new PlayerDetails(telegramId, firstName, lastName, cityName);
 
             InitCity();
         }

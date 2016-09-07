@@ -10,22 +10,26 @@ namespace NemesesGame
     public class Game
     {
         private int playerCount = 0;
+        public long chatId;
         public string chatName;
 
 		private string botReply = "";
         private string privateReply = "";
         
-		public Dictionary<long, City> players = new Dictionary<long, City>();
+        public Dictionary<long, City> players = new Dictionary<long, City>();
+        string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
         byte turn = 1;
 
         public Game()
         {
-            Console.WriteLine("chatName unassigned yet! chatName: " + chatName);
+            Console.WriteLine("chatName & chatId unassigned yet!");
         }
 
-        public Game(string ChatName)
+
+        public Game(long ChatId, string ChatName)
         {
+            chatId = ChatId;
             chatName = ChatName;
         }
 
@@ -39,18 +43,15 @@ namespace NemesesGame
             {
                 City city = kvp.Value;
                 botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
+                privateReply += string.Format(Program.GetLangString(chatId, "StartGame", city.playerDetails.cityName));
                 privateReply += string.Format(
-                    "You are the President {0} of Republic City. Your current resources:\n\r"
-                    + "Gold: {1} + {2}\n\r"
-                    + "Wood: {3} + {4}\n\r"
-                    + "Stone: {5} + {6}\n\r"
-                    + "Iron: {7} + {8}",
+                    Program.GetLangString(chatId, "CurrentResources",
                     
-                    city.playerDetails.firstName,
+                    city.playerDetails.cityName,
                     city.cityResources.Gold, city.resourceRegen.Gold,
                     city.cityResources.Wood, city.resourceRegen.Wood,
                     city.cityResources.Stone, city.resourceRegen.Stone,
-                    city.cityResources.Iron, city.resourceRegen.Iron);
+                    city.cityResources.Iron, city.resourceRegen.Iron));
                 Program.SendMessage(kvp.Key, privateReply);
                 privateReply = "";
             }
@@ -92,7 +93,14 @@ namespace NemesesGame
 		{
 			if (!PlayerCheck(telegramId, firstName, lastName))
 			{
-				players.Add(telegramId, new City(telegramId, firstName, lastName));
+                //randomize city name
+                int i = cityNames.Length;
+                Random rnd = new Random();
+                i = rnd.Next(0, i);
+                string cityName = cityNames[i];
+                Program.RemoveElement(cityNames, i);
+                                
+				players.Add(telegramId, new City(telegramId, firstName, lastName, cityName));
 				playerCount++;
 
 				if (playerCount == 1) //Lobby has just been made
