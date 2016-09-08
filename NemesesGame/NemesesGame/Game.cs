@@ -11,26 +11,26 @@ namespace NemesesGame
     public class Game
     {
         private int playerCount = 0;
-        public long chatId;
+        public long groupId;
         public string chatName;
 
 		private string botReply = "";
         private string privateReply = "";
         
-        public Dictionary<long, City> players = new Dictionary<long, City>();
+        public Dictionary<long, City> cities = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
         byte turn = 1;
 
         public Game()
         {
-            Console.WriteLine("chatName & chatId unassigned yet!");
+            Console.WriteLine("chatName & groupId unassigned yet!");
         }
 
 
         public Game(long ChatId, string ChatName)
         {
-            chatId = ChatId;
+            groupId = ChatId;
             chatName = ChatName;
         }
 
@@ -40,13 +40,13 @@ namespace NemesesGame
 
             botReply += "Game is starting... Players in game: \r\n";
 
-            foreach (KeyValuePair<long, City> kvp in players)
+            foreach (KeyValuePair<long, City> kvp in cities)
             {
                 City city = kvp.Value;
                 botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
-                privateReply += string.Format(Program.GetLangString(chatId, "StartGame", city.playerDetails.cityName));
+                privateReply += string.Format(Program.GetLangString(groupId, "StartGame", city.playerDetails.cityName));
                 privateReply += string.Format(
-                    Program.GetLangString(chatId, "CurrentResources",
+                    Program.GetLangString(groupId, "CurrentResources",
                     
                     city.playerDetails.cityName,
                     city.cityResources.Gold, city.resourceRegen.Gold,
@@ -56,7 +56,7 @@ namespace NemesesGame
 				BotReply(kvp.Key, ref privateReply);
             }
 
-			BotReply(chatId, ref botReply);
+			BotReply(groupId, ref botReply);
 		}
         
         /// <summary>
@@ -66,25 +66,25 @@ namespace NemesesGame
         {
             turn++;
             botReply += "Turn "+turn;
-			BotReply(chatId, ref botReply);
+			BotReply(groupId, ref botReply);
 		}
 
         public void GameHosted()  
         {
             botReply += "New game is made in this lobby!\r\n";
-			BotReply(chatId, ref botReply);
+			BotReply(groupId, ref botReply);
 		}
 
 		public void GameUnhosted()
 		{
 			botReply += "Lobby unhosted!\r\n";
-			BotReply(chatId, ref botReply);
+			BotReply(groupId, ref botReply);
 		}
 
 		public bool PlayerCheck(long telegramId, string firstName, string lastName)
 		{
 			//Checks if a player has joined the lobby
-			if (players.ContainsKey(telegramId))
+			if (cities.ContainsKey(telegramId))
 			{
 				return true;
 			}
@@ -105,7 +105,7 @@ namespace NemesesGame
                 string cityName = cityNames[i];
                 Program.RemoveElement(cityNames, i);
                                 
-				players.Add(telegramId, new City(telegramId, firstName, lastName, cityName));
+				cities.Add(telegramId, new City(telegramId, firstName, lastName, cityName));
 				playerCount++;
 
 				if (playerCount == 1) //Lobby has just been made
@@ -114,12 +114,12 @@ namespace NemesesGame
 				}
 
 				botReply += firstName + " " + lastName + " has joined the game!\r\n";
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " ALREADY joined the game!\n\rStahp confusing the bot :(\r\n";
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 		}
 
@@ -129,17 +129,17 @@ namespace NemesesGame
 			{
 				botReply += playerCount + " players have joined this lobby :\r\n";
 
-				foreach (KeyValuePair<long, City> kvp in players)
+				foreach (KeyValuePair<long, City> kvp in cities)
 				{
 					botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
 				}
 
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 			else
 			{
 				botReply += "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!\r\n";
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 		}
 
@@ -147,24 +147,24 @@ namespace NemesesGame
 		{
 			if (PlayerCheck(telegramId, firstName, lastName))
 			{
-				players.Remove(telegramId);
+				cities.Remove(telegramId);
 				playerCount--;
 
 				botReply += firstName + " " + lastName + " has left the lobby!\r\n";
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 			else
 			{
 				botReply += firstName + " " + lastName + " hasn't join the lobby yet!\r\n";
-				BotReply(chatId, ref botReply);
+				BotReply(groupId, ref botReply);
 			}
 		}
 
 		public int PlayerCount { get { return playerCount; } }
 
-		public void BotReply(long chatId, ref string message, IReplyMarkup replyMarkup = null)
+		public void BotReply(long groupId, ref string message, IReplyMarkup replyMarkup = null)
 		{
-			Program.SendMessage(chatId, message, replyMarkup);
+			Program.SendMessage(groupId, message, replyMarkup);
 			message = ""; //Reset botReply string
 		}
     }

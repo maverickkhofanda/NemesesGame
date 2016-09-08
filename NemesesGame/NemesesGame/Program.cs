@@ -99,13 +99,20 @@ namespace NemesesGame
 				}
                 else if (messageText.StartsWith("/startgame"))
                 {
-                    if (GameDict.ContainsKey(chatId))
+                    if (message.Chat.Type == ChatType.Group)
                     {
-                        GameDict[chatId].StartGame();
+                        if (GameDict.ContainsKey(chatId))
+                        {
+                            GameDict[chatId].StartGame();
+                        }
+                        else
+                        {
+                            await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
+                        }
                     }
                     else
                     {
-                        await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
+                        await Bot.SendTextMessageAsync(chatId, "Can only make game in groups. Please start the game in your group :)");
                     }
                 }
                 else if (messageText.StartsWith("/playerlist"))
