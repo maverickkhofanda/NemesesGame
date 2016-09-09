@@ -247,10 +247,11 @@ namespace NemesesGame
             }
         }
 
-		public static async void SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null)
+		public static async void SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup);
-		}
+			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+            Console.WriteLine("Reply to " + chatId + " has been sent!");
+        }
 
 		public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
         {

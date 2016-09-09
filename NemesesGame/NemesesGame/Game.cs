@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Timers;
 using NemesesGame;
 
 namespace NemesesGame
 {
     public class Game
     {
+        Timer _timer;
+        int turnInterval = 5000;
+
         private int playerCount = 0;
         public long groupId;
         public string chatName;
@@ -20,7 +25,7 @@ namespace NemesesGame
         public Dictionary<long, City> cities = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
-        byte turn = 1;
+        byte turn = 0;
 
         public Game()
         {
@@ -57,17 +62,29 @@ namespace NemesesGame
             }
 
 			BotReply(groupId, ref botReply);
+            Timer(turnInterval);
 		}
         
         /// <summary>
         /// still a STUB
         /// </summary>
-        public void Turn()
+        public void Turn(object sender, ElapsedEventArgs e)
         {
             turn++;
-            botReply += "Turn "+turn;
+            botReply += string.Format("Turn *{0}*\n\rNext turn in *{1}* secs", turn, turnInterval/1000);
 			BotReply(groupId, ref botReply);
+
+            //Insert turn implementation here
+            
 		}
+
+        private void Timer(int timerInterval, bool timerEnabled = true)
+        {
+            _timer = new Timer();
+            _timer.Elapsed += Turn;
+            _timer.Interval = timerInterval;
+            _timer.Enabled = true;
+        }
 
         public void GameHosted()  
         {
@@ -162,9 +179,9 @@ namespace NemesesGame
 
 		public int PlayerCount { get { return playerCount; } }
 
-		public void BotReply(long groupId, ref string message, IReplyMarkup replyMarkup = null)
+		public void BotReply(long groupId, ref string message, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-			Program.SendMessage(groupId, message, replyMarkup);
+			Program.SendMessage(groupId, message, replyMarkup, _parseMode);
 			message = ""; //Reset botReply string
 		}
     }
