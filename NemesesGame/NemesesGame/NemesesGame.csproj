@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="City.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="GamesHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RefResources.cs" />

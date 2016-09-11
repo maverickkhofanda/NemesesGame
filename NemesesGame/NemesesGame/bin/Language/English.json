@@ -2,12 +2,19 @@
 	"language" : "English", 
 	"events" : 
 		{
-		"Tester" : "This is a tester",
+		
 		"StartGame": "You are the President of {0} state.\n\r",
+		"GameNotFound": "No game has been hosted in this group.\r\nUse /joingame to make one!",
+
 		"CurrentResources" : [
 			"Republic {0} current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r", 
 			"{0}'s current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r"
 			],
+
+		"InGroupOnly" : "Can't do this action here! Please do it in groups or supergroups :)",
+		"CommandNotFound" : "waht r u talking about? Use commands I understand!(emoji)",
+
+		"Tester" : "This is a tester",
 		"ArrayTester" : [
 			"Tester Array: index 0",
 			"Tester Array: index 1",

@@ -18,9 +18,9 @@ namespace NemesesGame
 {
     class Program
     {
-        public static Dictionary<long, Game> GameDict = new Dictionary<long, Game>();
+        public static GamesHandler gamesHandler;
 
-        public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>();
+        public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>(); // dunno how to save this yet... unimplemented yet
         public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
         static string languageDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
 
@@ -41,9 +41,11 @@ namespace NemesesGame
 		static void Main(string[] args)
         {
             var me = Bot.GetMeAsync().Result;
-            Bot.OnMessage += BotOnMessageReceived;
+            Bot.OnUpdate += BotOnUpdateReceived;
 
+            gamesHandler = new GamesHandler(me);
             LoadLanguage();
+
 
 			Console.Title = me.Username;
 
@@ -56,12 +58,14 @@ namespace NemesesGame
             Bot.StopReceiving();
         }
 
-        private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
+        private static async void BotOnUpdateReceived(object sender, UpdateEventArgs updateEventArgs)
         {
-            var message = messageEventArgs.Message;
-            var messageText = message.Text;
+            var callbackQuery = updateEventArgs.Update.CallbackQuery;
+
+            var message = updateEventArgs.Update.Message;
             var chatId = message.Chat.Id;
             string chatName = "";
+
 			var senderId = message.From.Id;
             var senderFirstName = message.From.FirstName;
             var senderLastName = message.From.LastName;
@@ -83,82 +87,20 @@ namespace NemesesGame
                 }
             } catch { }
 
-            // Check if the message is a BotCommand, then implement it
-            if (entityType == "BotCommand")
+            if (message.Text != null & entityType == "BotCommand")
             {
-                if (messageText.StartsWith("/joingame"))
-                {
-					//Check if there is a lobby for that chatId
-					if (!GameDict.ContainsKey(chatId))
-					{
-						//If no, make one
-						GameDict.Add(chatId, new Game(chatId, chatName));
-					}
-					//Join the lobby
-					GameDict[chatId].PlayerJoin(senderId, senderFirstName, senderLastName);
-				}
-                else if (messageText.StartsWith("/startgame"))
-                {
-                    if (message.Chat.Type == ChatType.Group)
-                    {
-                        if (GameDict.ContainsKey(chatId))
-                        {
-                            GameDict[chatId].StartGame();
-                        }
-                        else
-                        {
-                            await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
-                        }
-                    }
-                    else
-                    {
-                        await Bot.SendTextMessageAsync(chatId, "Can only make game in groups. Please start the game in your group :)");
-                    }
-                }
-                else if (messageText.StartsWith("/playerlist"))
-				{
-					if (GameDict.ContainsKey(chatId))
-					{
-						GameDict[chatId].PlayerList();
-					}
-					else
-					{
-						await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
-					}
-				}
-				else if (messageText.StartsWith("/leavegame"))
-				{
-					if (GameDict.ContainsKey(chatId))
-					{
-						GameDict[chatId].PlayerLeave(senderId, senderFirstName, senderLastName);
-
-						if (GameDict[chatId].PlayerCount <= 0)
-						{
-							GameDict[chatId].GameUnhosted();
-
-							GameDict.Remove(chatId);
-						}
-					}
-					else
-					{
-						await Bot.SendTextMessageAsync(chatId, "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!");
-					}
-				}
-				else if (messageText.StartsWith("/start"))
-				{
-					await Bot.SendTextMessageAsync(chatId, "Insert player data to database unimplemented yet!\r\n\r\n" + gameInfo);
-                }
-				else
-				{
-                    await Bot.SendTextMessageAsync(chatId, "Command not found!");
-                }
+                gamesHandler.CommandHandler(updateEventArgs);
+                
+            }
+            else if (callbackQuery != null)
+            {
+                Console.WriteLine("CallbackQuery not implemented yet!");
             }
 			else
 			{
-				await Bot.SendTextMessageAsync(chatId, gameInfo);
-			}
+                SendMessage(chatId, gameInfo);
+            }
             
-            Console.WriteLine("Reply to " + chatName + " has been sent!");
         }
 
         public static void LoadLanguage()
@@ -195,6 +137,7 @@ namespace NemesesGame
                 if (!groupLangPref.ContainsKey(chatId))
                 {
                     events = langFiles["English"].SelectToken("events");
+                    Console.WriteLine("This chatgroup {0} don't have lang pref yet!", chatId);
                 }
                 else
                 {
@@ -273,7 +216,7 @@ namespace NemesesGame
             return newIndicesArray;
         }
 
-        static string gameInfo =
+        public static string gameInfo =
 			"In <Game name> game, you govern a city. You got one job: be the strongest state.\r\n\r\n" +
 			"Here is the command list.\r\n" +
 			"/joingame = Create new game / Join existing game\r\n" +
