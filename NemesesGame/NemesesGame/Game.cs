@@ -12,6 +12,15 @@ namespace NemesesGame
 {
     public class Game
     {
+		enum GameStatus
+		{
+			Unhosted, // Lobby hasn't been made
+			Hosted, // Lobby has been hosted, waiting for players to join and start game
+			Starting, // Lobby just started, starting turn 0 (Enable turn 0 commands, etc.)
+			InGame, // Game is currently running
+			Ending // Game has just finished
+		}
+
         Timer _timer;
         int turnInterval = 5000;
 
@@ -25,6 +34,7 @@ namespace NemesesGame
         public Dictionary<long, City> cities = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
+		private byte gameStatus = (byte)GameStatus.Unhosted;
         byte turn = 0;
 
         public Game()
@@ -37,6 +47,7 @@ namespace NemesesGame
         {
             groupId = ChatId;
             chatName = ChatName;
+			gameStatus = (byte)GameStatus.Hosted;
         }
 
         public void StartGame()
@@ -62,6 +73,7 @@ namespace NemesesGame
             }
 
 			BotReply(groupId, ref botReply);
+			gameStatus = (byte)GameStatus.Starting;
             Timer(turnInterval);
 		}
         
@@ -71,6 +83,7 @@ namespace NemesesGame
         public void Turn(object sender, ElapsedEventArgs e)
         {
             turn++;
+			gameStatus = (byte)GameStatus.InGame;
             botReply += string.Format("Turn *{0}*\n\rNext turn in *{1}* secs", turn, turnInterval/1000);
 			BotReply(groupId, ref botReply);
 
@@ -88,12 +101,14 @@ namespace NemesesGame
 
         public void GameHosted()  
         {
+			gameStatus = (byte)GameStatus.Hosted;
             botReply += "New game is made in this lobby!\r\n";
 			BotReply(groupId, ref botReply);
 		}
 
 		public void GameUnhosted()
 		{
+			gameStatus = (byte)GameStatus.Unhosted;
 			botReply += "Lobby unhosted!\r\n";
 			BotReply(groupId, ref botReply);
 		}
