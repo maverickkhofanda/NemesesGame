@@ -36,7 +36,7 @@ namespace NemesesGame
             me = thisBot;
         }
 
-        public void CommandHandler(UpdateEventArgs u)
+        public async Task CommandHandler(UpdateEventArgs u)
         {
             var message = u.Update.Message;
 
@@ -62,7 +62,12 @@ namespace NemesesGame
             string[] args = messageText.Split(null); //here, null means space (" ")
             args[0] = args[0].Replace("/", "");
             args[0] = args[0].ToLower().Replace("@" + me.Username.ToLower(), "");
-            //Console.WriteLine(args[0]);
+            /*
+            try
+            {
+                Console.WriteLine(args[1]);
+            } catch { Console.WriteLine("args[1] not found"); }
+            */
 
             // for now... check explicitly: IsInGroup, IsDev
             switch (args[0])
@@ -78,12 +83,12 @@ namespace NemesesGame
                             gameDict.Add(thisChatId, new Game(thisChatId, thisChatName));
                         }
                         //Join the lobby
-                        gameDict[thisChatId].PlayerJoin(senderId, senderFirstName, senderLastName);
+                        await gameDict[thisChatId].PlayerJoin(senderId, senderFirstName, senderLastName);
                     }
                     else
                     {
-                        reply = GetLangString(thisChatId, "InGroupOnly");
-                        BotReply(thisChatId, ref reply);
+                        reply += GetLangString(thisChatId, "InGroupOnly");
+                        await BotReply(thisChatId);
                     }
                     break;
 
@@ -93,61 +98,84 @@ namespace NemesesGame
                     {
                         if (gameDict.ContainsKey(thisChatId))
                         {
-                            gameDict[thisChatId].StartGame();
+                            await gameDict[thisChatId].StartGame();
+                            
                         }
                         else
                         {
-                            reply = GetLangString(thisChatId, "GameNotFound");
-                            BotReply(thisChatId, ref reply);
+                            reply += GetLangString(thisChatId, "GameNotFound");
+                            await BotReply(thisChatId);
+                            break;
                         }
                     }
                     else
                     {
-                        reply = GetLangString(thisChatId, "InGroupOnly");
-                        BotReply(thisChatId, ref reply);
+                        reply += GetLangString(thisChatId, "InGroupOnly");
+                        await BotReply(thisChatId);
+                    }
+                    break;
+
+                case "choosename":
+                    if (gameDict.ContainsKey(thisChatId)) {
+                        if (gameDict[thisChatId].gameStatus == GameStatus.Starting)
+                        {
+                            string newCityName = args[1];
+                            await gameDict[thisChatId].ChooseName(senderId, newCityName);
+                            break;
+                        }
+                        else
+                        {
+                            reply += GetLangString(thisChatId, "CantChooseName");
+                            await BotReply(thisChatId);
+                            break;
+                        }
+                    } else
+                    {
+                        reply += GetLangString(thisChatId, "GameNotFound");
+                        await BotReply(thisChatId);
                     }
                     break;
 
                 case "playerlist":
                     if (gameDict.ContainsKey(thisChatId))
                     {
-                        gameDict[thisChatId].PlayerList();
+                        await gameDict[thisChatId].PlayerList();
                     }
                     else
                     {
-                        reply = GetLangString(thisChatId, "GameNotFound");
-                        BotReply(thisChatId, ref reply);
+                        reply += GetLangString(thisChatId, "GameNotFound");
+                        await BotReply(thisChatId);
                     }
                     break;
 
                 case "leavegame":
                     if (gameDict.ContainsKey(thisChatId))
                     {
-                        gameDict[thisChatId].PlayerLeave(senderId, senderFirstName, senderLastName);
+                        await gameDict[thisChatId].PlayerLeave(senderId, senderFirstName, senderLastName);
 
                         if (gameDict[thisChatId].PlayerCount <= 0)
                         {
-                            gameDict[thisChatId].GameUnhosted();
+                            await gameDict[thisChatId].GameUnhosted();
 
                             gameDict.Remove(thisChatId);
                         }
                     }
                     else
                     {
-                        reply = GetLangString(thisChatId, "GameNotFound");
-                        BotReply(thisChatId, ref reply);
+                        reply += GetLangString(thisChatId, "GameNotFound");
+                        await BotReply(thisChatId);
                     }
                     break;
 
                 case "start":
                     // Game Info not inserted to language.json yet!
-                    reply = Program.gameInfo;
-                    BotReply(thisChatId, ref reply);
+                    reply += Program.gameInfo;
+                    await BotReply(thisChatId);
                     break;
 
                 default:
-                    reply = GetLangString(thisChatId, "CommandNotFound");
-                    BotReply(thisChatId, ref reply);
+                    reply += GetLangString(thisChatId, "CommandNotFound");
+                    await BotReply(thisChatId);
                     break;
             }
         }
@@ -157,10 +185,10 @@ namespace NemesesGame
             return Program.GetLangString(chatId, key, args);
         }
 
-        public void BotReply(long groupId, ref string message, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        public async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
-            Program.SendMessage(groupId, message, replyMarkup, _parseMode);
-            message = ""; //Reset botReply string
+            await Program.SendMessage(groupId, reply, replyMarkup, _parseMode);
+            reply += ""; //Reset reply string
         }
     }
 }

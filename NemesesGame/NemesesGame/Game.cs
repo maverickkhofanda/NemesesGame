@@ -13,7 +13,7 @@ namespace NemesesGame
     public class Game
     {
 		Timer _timer;
-        int turnInterval = 5000;
+        int turnInterval = 10;
 
         private int playerCount = 0;
         public long groupId;
@@ -25,7 +25,7 @@ namespace NemesesGame
         public Dictionary<long, City> cities = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
-		private GameStatus gameStatus = GameStatus.Unhosted;
+		public GameStatus gameStatus = GameStatus.Unhosted;
         byte turn = 0;
 
         public Game()
@@ -41,67 +41,86 @@ namespace NemesesGame
 			gameStatus = GameStatus.Hosted;
         }
 
-        public void StartGame()
+        public async Task StartGame()
         {
-            //note: Private chat to each player unimplemente yet!
+            //note: Private chat to each player unimplemented yet!
 
-            botReply += "Game is starting... Players in game: \r\n";
+
+            botReply += GetLangString(groupId, "StartGameGroup");
 
             foreach (KeyValuePair<long, City> kvp in cities)
             {
                 City city = kvp.Value;
                 botReply += city.playerDetails.firstName + " " + city.playerDetails.lastName + "\r\n";
-                privateReply += string.Format(Program.GetLangString(groupId, "StartGame", city.playerDetails.cityName));
-                privateReply += string.Format(
-                    Program.GetLangString(groupId, "CurrentResources",
-                    
-                    city.playerDetails.cityName,
-                    city.cityResources.Gold, city.resourceRegen.Gold,
-                    city.cityResources.Wood, city.resourceRegen.Wood,
-                    city.cityResources.Stone, city.resourceRegen.Stone,
-                    city.cityResources.Iron, city.resourceRegen.Iron));
-				BotReply(kvp.Key, ref privateReply);
             }
 
-			BotReply(groupId, ref botReply);
+            botReply += GetLangString(groupId, "AskChooseName", turnInterval);
 			gameStatus = GameStatus.Starting;
+            await BotReply(groupId);
+
             Timer(turnInterval, Turn);
 		}
         
         /// <summary>
         /// still a STUB
         /// </summary>
-        public void Turn(object sender, ElapsedEventArgs e)
+        public async void Turn(object sender, ElapsedEventArgs e)
         {
             turn++;
 			gameStatus = GameStatus.InGame;
-            botReply += string.Format("Turn *{0}*\n\rNext turn in *{1}* secs", turn, turnInterval/1000);
-			BotReply(groupId, ref botReply);
+
+            if(turn == 1)
+            {
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    City city = kvp.Value;
+                    privateReply += string.Format(GetLangString(groupId, "StartGamePrivate", city.playerDetails.cityName));
+                    privateReply += string.Format(
+                        Program.GetLangString(groupId, "CurrentResources",
+
+                        city.playerDetails.cityName,
+                        city.cityResources.Gold, city.resourceRegen.Gold,
+                        city.cityResources.Wood, city.resourceRegen.Wood,
+                        city.cityResources.Stone, city.resourceRegen.Stone,
+                        city.cityResources.Iron, city.resourceRegen.Iron));
+                    await PrivateReply(kvp.Key);
+                }
+            }
+
+            botReply += GetLangString(groupId, "NextTurn", turn, turnInterval);
+			await BotReply(groupId);
 
             //Insert turn implementation here
             
 		}
 
+        public async Task ChooseName(long PlayerId, string NewCityName)
+        {
+            cities[PlayerId].playerDetails.cityName = NewCityName;
+            privateReply += GetLangString(groupId, "NameChosen", NewCityName);
+            await PrivateReply(PlayerId);
+        }
+
         private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
         {
             _timer = new Timer();
             _timer.Elapsed += elapsedEventHandler;
-            _timer.Interval = timerInterval;
+            _timer.Interval = timerInterval * 1000;
             _timer.Enabled = true;
         }
 
-        public void GameHosted()  
+        public async Task GameHosted()  
         {
 			gameStatus = GameStatus.Hosted;
             botReply += "New game is made in this lobby!\r\n";
-			BotReply(groupId, ref botReply);
+			await BotReply(groupId);
 		}
 
-		public void GameUnhosted()
+		public async Task GameUnhosted()
 		{
 			gameStatus = GameStatus.Unhosted;
 			botReply += "Lobby unhosted!\r\n";
-			BotReply(groupId, ref botReply);
+			await BotReply(groupId);
 		}
 
 		public bool PlayerCheck(long telegramId, string firstName, string lastName)
@@ -117,7 +136,7 @@ namespace NemesesGame
 			}
 		}
 
-		public void PlayerJoin(long telegramId, string firstName, string lastName)
+		public async Task PlayerJoin(long telegramId, string firstName, string lastName)
 		{
 			if (!PlayerCheck(telegramId, firstName, lastName))
 			{
@@ -133,20 +152,19 @@ namespace NemesesGame
 
 				if (playerCount == 1) //Lobby has just been made
 				{
-					GameHosted();
+					await GameHosted();
 				}
-
-				botReply += firstName + " " + lastName + " has joined the game!\r\n";
-				BotReply(groupId, ref botReply);
+                botReply += GetLangString(groupId, "JoinedGame", firstName, lastName).Replace("  ", " ");
+				await BotReply(groupId);
 			}
 			else
 			{
-				botReply += firstName + " ALREADY joined the game!\n\rStahp confusing the bot :(\r\n";
-				BotReply(groupId, ref botReply);
+                botReply += GetLangString(groupId, "AlreadyJoinedGame", firstName);
+				await BotReply(groupId);
 			}
 		}
 
-		public void PlayerList()
+		public async Task PlayerList()
 		{
 			if (playerCount > 0)
 			{
@@ -154,41 +172,52 @@ namespace NemesesGame
 
 				foreach (KeyValuePair<long, City> kvp in cities)
 				{
-					botReply += kvp.Value.playerDetails.firstName + " " + kvp.Value.playerDetails.lastName + "\r\n";
+                    botReply += string.Format("*{0}* *{1}*\r\n", kvp.Value.playerDetails.firstName, kvp.Value.playerDetails.lastName);
 				}
 
-				BotReply(groupId, ref botReply);
+				await BotReply(groupId);
 			}
 			else
 			{
 				botReply += "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!\r\n";
-				BotReply(groupId, ref botReply);
+				await BotReply(groupId);
 			}
 		}
 
-		public void PlayerLeave(long telegramId, string firstName, string lastName)
+		public async Task PlayerLeave(long telegramId, string firstName, string lastName)
 		{
 			if (PlayerCheck(telegramId, firstName, lastName))
 			{
 				cities.Remove(telegramId);
 				playerCount--;
 
-				botReply += firstName + " " + lastName + " has left the lobby!\r\n";
-				BotReply(groupId, ref botReply);
+                botReply += GetLangString(groupId, "LeaveGame");
+				await BotReply(groupId);
 			}
 			else
 			{
 				botReply += firstName + " " + lastName + " hasn't join the lobby yet!\r\n";
-				BotReply(groupId, ref botReply);
+				await BotReply(groupId);
 			}
 		}
 
 		public int PlayerCount { get { return playerCount; } }
 
-		public void BotReply(long groupId, ref string message, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        public string GetLangString(long chatId, string key, params object[] args)
+        {
+            return Program.GetLangString(chatId, key, args);
+        }
+
+        public async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-			Program.SendMessage(groupId, message, replyMarkup, _parseMode);
-			message = ""; //Reset botReply string
+			await Program.SendMessage(groupId, botReply, replyMarkup, _parseMode);
+			botReply = ""; //Reset botReply string
 		}
+
+        public async Task PrivateReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        {
+            await Program.SendMessage(groupId, privateReply, replyMarkup, _parseMode);
+            privateReply = ""; //Reset botReply string
+        }
     }
 }

@@ -89,7 +89,7 @@ namespace NemesesGame
 
             if (message.Text != null & entityType == "BotCommand")
             {
-                gamesHandler.CommandHandler(updateEventArgs);
+               gamesHandler.CommandHandler(updateEventArgs);
                 
             }
             else if (callbackQuery != null)
@@ -98,7 +98,7 @@ namespace NemesesGame
             }
 			else
 			{
-                SendMessage(chatId, gameInfo);
+                await SendMessage(chatId, gameInfo);
             }
             
         }
@@ -137,7 +137,7 @@ namespace NemesesGame
                 if (!groupLangPref.ContainsKey(chatId))
                 {
                     events = langFiles["English"].SelectToken("events");
-                    Console.WriteLine("This chatgroup {0} don't have lang pref yet!", chatId);
+                    //Console.WriteLine("This chatgroup {0} don't have lang pref yet!", chatId);
                 }
                 else
                 {
@@ -172,7 +172,7 @@ namespace NemesesGame
                     }
 
                     Console.WriteLine("Error GetLangString(): No definition for type" + token.Type);
-                    output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\rThanks";
+                    output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\r[Error: string key not found in .json]\n\rThanks";
 
                     return output;
                 }
@@ -190,7 +190,7 @@ namespace NemesesGame
             }
         }
 
-		public static async void SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
+		public static async Task SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
 		{
 			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
             Console.WriteLine("Reply to " + chatId + " has been sent!");
