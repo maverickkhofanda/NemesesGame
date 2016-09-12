@@ -145,15 +145,18 @@ namespace NemesesGame
             byte woodLength = (byte) refResources.ResourceRegen[ResourceType.Wood].Length;
             for (byte i = 0; i < woodLength; i++)
             {
-                string regen = refResources.ResourceRegen[ResourceType.Wood][0].ToString();
+                string regen = refResources.ResourceRegen[ResourceType.Wood][i].ToString();
 
                 if (cities[playerId].lvlResourceRegen[ResourceType.Wood] == i)
                 {
-                    regen = ToBold(ref regen);
+					regen = "[" + regen + "]";
                 }
-                    woodString += regen + "/";
+				woodString += regen;
+				if (i != woodLength - 1)
+				{
+					woodString += "/";
+				}
             }
-            woodString.TrimEnd('/');
 
             buttons.Add(new InlineKeyboardButton(woodString, $"woodUpgrade|{groupId}"));
             menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
