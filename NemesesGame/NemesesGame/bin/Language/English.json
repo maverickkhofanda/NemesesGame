@@ -5,20 +5,29 @@
 		
 		"AskChooseName" : "\r\nYou can choose your name for *{0}* seconds by using /choosename (your city name).",
 		"GameNotFound": "No game has been hosted in this group.\r\nUse /joingame to make one!\r\n",
-		"JoinedGame" : "*{0} {1}* has joined the game!\r\n",
-		"LeaveGame" : "*{0} {1}* has left the lobby!\r\n",
-		"NextTurn" : "Turn *{0}*\n\rNext turn in *{1}* secs",
-		"StartGameGroup" : "Game is starting... Players in game: \r\n",
+		"IteratePlayerCityName" : "*{0}* as *{1}*'s head of state\r\n",
+		"JoinedGame" : "*{0}* *{1}* has joined the game!\r\n",
+		"LeaveGame" : "*{0}* *{1}* has left the lobby!\r\n",
+		"NextTurn" : "\r\nTurn *{0}*\n\rNext turn in *{1}* secs",
+		"StartGameGroup" : "Game is starting...\r\n",
 
+		"PlayerListHeader" : "Players in game:\r\n",
+		"UpgradeProductionHeader" : "Which resource production you want to upgrade?",
+
+		"AskAction" : [
+			"What wilt thou do milord?",
+			"Please assign your servants jobs to do"
+			],
+		"AssignTask" : "Assign Task...",
 		"NameChosen" : "Your city name: *{0}*",
 		"StartGamePrivate": "You are the President of *{0}* state.\n\r",
 
-		"CurrentResources" : [
-			"Republic {0} current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r", 
-			"{0}'s current resources:\n\r{1} gold + {2}/ turn\n\r{3} wood + {4}/ turn\n\r{5} stone + {6}/ turn\n\r{7} iron + {8}/ turn\n\r"
+		"CurrentResources" : [ 
+			"{0}'s current resources:\n\rGold💰: {1} + {2}/ turn\n\rWood🌲: {3} + {4}/ turn\n\rStone🗿: {5} + {6}/ turn\n\rMithril💎: {7} + {8}/ turn\n\r"
 			],
 
 		"AlreadyJoinedGame" : "*{0}* ALREADY joined the game!\n\rStahp confusing the bot :(\r\n",
+		"NotJoinedGame" : "YOU HAVEN'T JOINED ANY GAME!\n\rStahp confusing the bot :(\r\n",
 		"CommandNotFound" : "waht r u talking about? Use commands I understand!(emoji)",
 		"CantChooseName" : "Hey, you can't choose name now! (emoji)",
 		"InGroupOnly" : "Can't do this action here! Please do it in groups or supergroups :)",

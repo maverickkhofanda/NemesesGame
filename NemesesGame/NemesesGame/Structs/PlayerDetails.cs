@@ -12,13 +12,15 @@ namespace NemesesGame
         public string lastName;
         public long telegramId;
         public string cityName;
+        public long groupId;
 
-        public PlayerDetails(long TelegramId, string FirstName, string LastName, string CityName)
+        public PlayerDetails(long TelegramId, string FirstName, string LastName, string CityName, long GroupId)
         {
             firstName = FirstName;
             lastName = LastName;
             telegramId = TelegramId;
             cityName = CityName;
+            groupId = GroupId;
         }
     }
 }

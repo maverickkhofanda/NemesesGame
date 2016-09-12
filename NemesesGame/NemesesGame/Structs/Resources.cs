@@ -11,19 +11,19 @@ namespace NemesesGame
         int gold;
         int wood;
         int stone;
-        int iron;
+        int mithril;
 
         public int Gold { get { return gold; } set { gold = value; } }
         public int Wood { get { return wood; } set { wood = value; } }
         public int Stone { get { return stone; } set { stone = value; } }
-        public int Iron { get { return iron; } set { iron = value; } }
+        public int Mithril { get { return mithril; } set { mithril = value; } }
 
-        public Resources(int thisGold, int thisWood, int thisStone, int thisIron)
+        public Resources(int thisGold, int thisWood, int thisStone, int thisMithril)
         {
             gold = thisGold;
             wood = thisWood;
             stone = thisStone;
-            iron = thisIron;
+            mithril = thisMithril;
         }
 
         public static Resources operator +(Resources a, Resources b)
@@ -32,7 +32,7 @@ namespace NemesesGame
             c.gold = a.gold + b.gold;
             c.wood = a.wood + b.wood;
             c.stone = a.stone + b.stone;
-            c.iron = a.iron + b.iron;
+            c.mithril = a.mithril + b.mithril;
 
             return c;
         }
@@ -43,7 +43,7 @@ namespace NemesesGame
             c.gold = a.gold - b.gold;
             c.wood = a.wood - b.wood;
             c.stone = a.stone - b.stone;
-            c.iron = a.iron - b.iron;
+            c.mithril = a.mithril - b.mithril;
 
             return c;
         }

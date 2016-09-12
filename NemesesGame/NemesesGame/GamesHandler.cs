@@ -36,10 +36,8 @@ namespace NemesesGame
             me = thisBot;
         }
 
-        public async Task CommandHandler(UpdateEventArgs u)
+        public async Task CommandHandler(Message message)
         {
-            var message = u.Update.Message;
-
             var messageText = message.Text;
 
             var senderId = message.From.Id;
@@ -48,6 +46,8 @@ namespace NemesesGame
 
             var thisChatId = message.Chat.Id;
             var thisChatName = "";
+
+            Console.WriteLine("\r\nMessage received from " + senderFirstName + " (" + senderId + ")" + " at " + thisChatId);
 
             //assign thischatname
             if (message.Chat.Type == ChatType.Private)
@@ -59,15 +59,16 @@ namespace NemesesGame
                 thisChatName = message.Chat.Title;
             }
 
+            //remove all non alphanumeric char
+            char[] arr = messageText.ToCharArray();
+            arr = Array.FindAll(arr, (c => (char.IsLetterOrDigit(c)
+                                              || char.IsWhiteSpace(c)
+                                              || c == '-')));
+            messageText = new string(arr);
+
             string[] args = messageText.Split(null); //here, null means space (" ")
-            args[0] = args[0].Replace("/", "");
-            args[0] = args[0].ToLower().Replace("@" + me.Username.ToLower(), "");
-            /*
-            try
-            {
-                Console.WriteLine(args[1]);
-            } catch { Console.WriteLine("args[1] not found"); }
-            */
+            //args[0] = args[0].Replace("/", "");
+            args[0] = args[0].ToLower().Replace(me.Username.ToLower(), "");
 
             // for now... check explicitly: IsInGroup, IsDev
             switch (args[0])
@@ -119,7 +120,13 @@ namespace NemesesGame
                     if (gameDict.ContainsKey(thisChatId)) {
                         if (gameDict[thisChatId].gameStatus == GameStatus.Starting)
                         {
-                            string newCityName = args[1];
+                            string newCityName = "";
+                            var newArgs = Program.RemoveElement(args, 0);
+
+                            foreach (string arg in newArgs)
+                            {
+                                newCityName += arg + " ";
+                            }
                             await gameDict[thisChatId].ChooseName(senderId, newCityName);
                             break;
                         }
@@ -180,15 +187,49 @@ namespace NemesesGame
             }
         }
 
-        public string GetLangString(long chatId, string key, params object[] args)
+        public async Task CallbackQueryHandler(CallbackQuery callbackQuery)
+        {
+            var msgId = callbackQuery.Message.MessageId;
+
+            var senderId = callbackQuery.From.Id;
+            var senderFirstName = callbackQuery.From.FirstName;
+            var senderLastName = callbackQuery.From.LastName;
+            var senderName = senderFirstName + " " + senderLastName;
+
+            Console.WriteLine("\r\nCallbackQuery received from " + senderName + " (" + senderId + ")");
+            Console.WriteLine("CallbackQuery data : " + callbackQuery.Data);
+
+            var args = callbackQuery.Data.Split('|');
+            // QueryCommand = args[0]
+            long groupId = long.Parse(args[1]);
+
+            switch (args[0])
+            {
+                case "AssignTask":
+                    await gameDict[groupId].AssignTask(senderId, msgId);
+                    break;
+                case "UpgradeProduction":
+                    await gameDict[groupId].UpgradeProduction(senderId, msgId);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        string GetLangString(long chatId, string key, params object[] args)
         {
             return Program.GetLangString(chatId, key, args);
         }
 
-        public async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
             await Program.SendMessage(groupId, reply, replyMarkup, _parseMode);
             reply += ""; //Reset reply string
+        }
+
+        async Task EditMessage(long chatId, int msgId, string messageContent, IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
+        {
+            await Program.EditMessage(chatId, msgId, messageContent, repMarkup: replyMarkup, _parseMode: ParseMode);
         }
     }
 }

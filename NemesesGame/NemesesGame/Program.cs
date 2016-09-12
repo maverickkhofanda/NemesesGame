@@ -41,14 +41,14 @@ namespace NemesesGame
 		static void Main(string[] args)
         {
             var me = Bot.GetMeAsync().Result;
-            Bot.OnUpdate += BotOnUpdateReceived;
+            Bot.OnCallbackQuery += BotOnCallbackQueryReceived;
+            Bot.OnMessage += BotOnMessageReceived;
 
             gamesHandler = new GamesHandler(me);
             LoadLanguage();
-
-
+            
 			Console.Title = me.Username;
-
+            
             Bot.StartReceiving();
 
             //debug send language
@@ -58,46 +58,48 @@ namespace NemesesGame
             Bot.StopReceiving();
         }
 
-        private static async void BotOnUpdateReceived(object sender, UpdateEventArgs updateEventArgs)
+        private static async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs callbackQueryEventArgs)
         {
-            var callbackQuery = updateEventArgs.Update.CallbackQuery;
+            var callbackQuery = callbackQueryEventArgs.CallbackQuery;
+            var senderId = callbackQuery.From.Id;
 
-            var message = updateEventArgs.Update.Message;
+            try
+            {
+                await gamesHandler.CallbackQueryHandler(callbackQuery);
+            } catch (KeyNotFoundException) {
+                string reply = GetLangString(0, "NotJoinedGame");
+                await SendMessage(senderId, reply);
+            }
+        }
+
+        private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
+        {
+            var message = messageEventArgs.Message;
+
             var chatId = message.Chat.Id;
-            string chatName = "";
-
-			var senderId = message.From.Id;
-            var senderFirstName = message.From.FirstName;
-            var senderLastName = message.From.LastName;
-            var senderName = senderFirstName + " " + senderLastName;
             string entityType = "";
-
-            Console.WriteLine("\r\nMessage received from " + senderName + " (" + senderId + ")" + " at " + chatId);
 
             try
             {
                 entityType = message.Entities.ElementAt(0).Type.ToString();
-
-                if(message.Chat.Type == ChatType.Private)
-                {
-                    chatName = senderFirstName;
-                } else
-                {
-                    chatName = message.Chat.Title;
-                }
             } catch { }
 
+            // BotCommandHandler
             if (message.Text != null & entityType == "BotCommand")
             {
-               gamesHandler.CommandHandler(updateEventArgs);
-                
-            }
-            else if (callbackQuery != null)
-            {
-                Console.WriteLine("CallbackQuery not implemented yet!");
+                try
+                {
+                    await gamesHandler.CommandHandler(message); ;
+                }
+                catch (KeyNotFoundException)
+                {
+                    string reply = GetLangString(0, "NotJoinedGame");
+                    await SendMessage(chatId, reply);
+                }
             }
 			else
 			{
+                Console.WriteLine("Unhandled message received from " + chatId);
                 await SendMessage(chatId, gameInfo);
             }
             
@@ -194,6 +196,12 @@ namespace NemesesGame
 		{
 			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
             Console.WriteLine("Reply to " + chatId + " has been sent!");
+        }
+
+        public static async Task EditMessage(long chatId, int msgId, string messageContent, IReplyMarkup repMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        {
+            await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+            Console.WriteLine("Message editted at " + chatId);
         }
 
 		public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
