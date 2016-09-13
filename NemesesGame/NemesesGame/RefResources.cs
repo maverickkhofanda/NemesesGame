@@ -19,12 +19,10 @@ namespace NemesesGame
         }
         Dictionary<ResourceType, byte> defaultLvlResourceRegen = new Dictionary<ResourceType, byte>();
         Dictionary<ResourceType, int[]> resourceRegen = new Dictionary<ResourceType, int[]>();
-        /*
-        List<int> woodRegenLvl;
-        List<int> stoneRegenLvl;
-        List<int> mithrilRegenLvl;
-        */
+        Dictionary<ResourceType, Resources[]> upgradeCost = new Dictionary<ResourceType, Resources[]>();
         
+        // Not balanced yet!
+
         // Starting Resources
         int goldStarting = 2000;
         int woodStarting = 250;
@@ -32,22 +30,32 @@ namespace NemesesGame
         int mithrilStarting = 50;
         Resources startingResources;
 
-        // Resource Production Rate : 1
+        #region Resource Regen
         int goldRegenDefault = 2000;
+
         int woodRegen0 = 50;
-        int stoneRegen0 = 20;
-        int mithrilRegen0 = 0;
-        //Resources resourcesRegen0;
-
-        // Resource Production Rate : 2
         int woodRegen1 = 100;
-        int stoneRegen1 = 60;
-        int mithrilRegen1 = 30;
-
-        // Resource Production Rate : 3
         int woodRegen2 = 300;
+
+        int stoneRegen0 = 20;
+        int stoneRegen1 = 60;
         int stoneRegen2 = 120;
+
+        int mithrilRegen0 = 0;
+        int mithrilRegen1 = 30;
         int mithrilRegen2 = 100;
+        #endregion
+
+        #region ResourceUpgradePrice
+        Resources woodUpgrade1 = new Resources(0, 100, 20, 10);
+        Resources woodUpgrade2 = new Resources(300, 300, 100, 50);
+
+        Resources stoneUpgrade1 = new Resources(50, 200, 30, 20);
+        Resources stoneUpgrade2 = new Resources(500, 300, 100, 100);
+
+        Resources mithrilUpgrade1 = new Resources(250, 100, 30, 20);
+        Resources mithrilUpgrade2 = new Resources(1000, 300, 100, 150);
+        #endregion
 
         void InitRefDict ()
         {
@@ -58,20 +66,10 @@ namespace NemesesGame
             resourceRegen.Add(ResourceType.Wood, new int[] { woodRegen0, woodRegen1, woodRegen2 });
             resourceRegen.Add(ResourceType.Stone, new int[] { stoneRegen0, stoneRegen1, stoneRegen2 });
             resourceRegen.Add(ResourceType.Mithril, new int[] { mithrilRegen0, mithrilRegen1, mithrilRegen2 });
-            /*
-            woodRegenLvl.Add(woodRegen0);
-            woodRegenLvl.Insert(0, woodRegen0);
-            woodRegenLvl.Insert(1, woodRegen1);
-            woodRegenLvl.Insert(2, woodRegen2);
 
-            stoneRegenLvl.Insert(0, stoneRegen0);
-            stoneRegenLvl.Insert(1, stoneRegen1);
-            stoneRegenLvl.Insert(2, stoneRegen2);
-
-            mithrilRegenLvl.Insert(0, mithrilRegen0);
-            mithrilRegenLvl.Insert(1, mithrilRegen1);
-            mithrilRegenLvl.Insert(2, mithrilRegen2);
-            */
+            upgradeCost.Add(ResourceType.Wood, new Resources[] { new Resources(0, 0, 0, 0), woodUpgrade1, woodUpgrade2 });
+            upgradeCost.Add(ResourceType.Stone, new Resources[] { new Resources(0, 0, 0, 0), stoneUpgrade1, stoneUpgrade2 });
+            upgradeCost.Add(ResourceType.Mithril, new Resources[] { new Resources(0, 0, 0, 0), mithrilUpgrade1, mithrilUpgrade2 });
         }
         void StartingResourcesCount()
         {
@@ -86,16 +84,12 @@ namespace NemesesGame
         public Resources StartingResources { get { return startingResources; } }
         public Dictionary<ResourceType, byte> DefaultLvlResourceRegen { get { return defaultLvlResourceRegen; } }
         public Dictionary<ResourceType, int[]> ResourceRegen { get { return resourceRegen; } }
+        public Dictionary<ResourceType, Resources[]> UpgradeCost { get { return upgradeCost; } }
 
         public int GoldRegenDefault { get { return goldRegenDefault; } }
 
         /*
-        public List<int> WoodRegenLvl { get { return woodRegenLvl; } }
-        public List<int> StoneRegenLvl { get { return stoneRegenLvl; } }
-        public List<int> MithrilRegenLvl { get { return mithrilRegenLvl; } }
-
-
-        
+       
         public int GoldStarting { get { return goldStarting; } }
         public int WoodStarting { get { return woodStarting; } }
         public int StoneStarting { get { return stoneStarting; } }

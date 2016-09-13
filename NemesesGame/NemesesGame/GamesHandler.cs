@@ -73,6 +73,54 @@ namespace NemesesGame
             // for now... check explicitly: IsInGroup, IsDev
             switch (args[0])
             {
+                case "choosename":
+                    if (gameDict.ContainsKey(thisChatId))
+                    {
+                        if (gameDict[thisChatId].gameStatus == GameStatus.Starting)
+                        {
+                            try
+                            {
+                                if (args[1] != null | args[1] != "")
+                                {
+                                    string newCityName = "";
+                                    var newArgs = Program.RemoveElement(args, 0);
+
+                                    foreach (string arg in newArgs)
+                                    {
+                                        newCityName += arg + " ";
+                                    }
+                                    await gameDict[thisChatId].ChooseName(senderId, newCityName);
+                                    break;
+                                }
+                                else
+                                {
+                                    reply += GetLangString(thisChatId, "ChooseNameEmpty");
+                                    await BotReply(thisChatId);
+                                    break;
+                                }
+                            } catch (IndexOutOfRangeException e)
+                            {
+                                reply += GetLangString(thisChatId, "ChooseNameEmpty");
+                                await BotReply(thisChatId);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            reply += GetLangString(thisChatId, "CantChooseName");
+                            await BotReply(thisChatId);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        reply += GetLangString(thisChatId, "GameNotFound");
+                        await BotReply(thisChatId);
+                    }
+                    break;
+
+                #region lobby commands
+
                 case "joingame":
                     // check if inGroup or inSuperGroup
                     if (message.Chat.Type == ChatType.Group | message.Chat.Type == ChatType.Supergroup)
@@ -116,33 +164,6 @@ namespace NemesesGame
                     }
                     break;
 
-                case "choosename":
-                    if (gameDict.ContainsKey(thisChatId)) {
-                        if (gameDict[thisChatId].gameStatus == GameStatus.Starting)
-                        {
-                            string newCityName = "";
-                            var newArgs = Program.RemoveElement(args, 0);
-
-                            foreach (string arg in newArgs)
-                            {
-                                newCityName += arg + " ";
-                            }
-                            await gameDict[thisChatId].ChooseName(senderId, newCityName);
-                            break;
-                        }
-                        else
-                        {
-                            reply += GetLangString(thisChatId, "CantChooseName");
-                            await BotReply(thisChatId);
-                            break;
-                        }
-                    } else
-                    {
-                        reply += GetLangString(thisChatId, "GameNotFound");
-                        await BotReply(thisChatId);
-                    }
-                    break;
-
                 case "playerlist":
                     if (gameDict.ContainsKey(thisChatId))
                     {
@@ -173,6 +194,24 @@ namespace NemesesGame
                         await BotReply(thisChatId);
                     }
                     break;
+                #endregion
+
+                #region dev commands
+
+                case "forceturn":
+                    if (senderId == Program.greyfader)
+                    {
+                        //await gameDict[thisChatId].Turn();
+                        reply += "forceturn unimplemented yet"; //GetLangString(thisChatId, "")
+                    } else
+                    {
+                        reply += GetLangString(thisChatId, "NotDev");
+                    }
+                    
+                    await BotReply(thisChatId);
+                    break;
+
+                #endregion
 
                 case "start":
                     // Game Info not inserted to language.json yet!
@@ -208,9 +247,15 @@ namespace NemesesGame
                 case "AssignTask":
                     await gameDict[groupId].AssignTask(senderId, msgId);
                     break;
-                case "UpgradeProduction":
-                    await gameDict[groupId].UpgradeProduction(senderId, msgId);
+
+                    case "UpgradeProduction":
+                        await gameDict[groupId].UpgradeProduction(senderId, msgId);
+                        break;
+
+                case "YourStatus":
+                    await gameDict[groupId].MyStatus(senderId, msgId);
                     break;
+
                 default:
                     break;
             }

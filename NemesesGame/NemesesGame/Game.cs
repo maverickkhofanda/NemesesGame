@@ -58,7 +58,7 @@ namespace NemesesGame
 		}
         
         /// <summary>
-        /// still a STUB
+        /// What happens when 'Next Turn' triggered...
         /// </summary>
         public async void Turn(object sender, ElapsedEventArgs e)
         {
@@ -73,18 +73,15 @@ namespace NemesesGame
                 {
                     City city = kvp.Value;
                     privateReply += string.Format(GetLangString(groupId, "StartGamePrivate", city.playerDetails.cityName));
-                    privateReply += string.Format(
-                        Program.GetLangString(groupId, "CurrentResources",
-
-                        city.playerDetails.cityName,
-                        city.cityResources.Gold, city.resourceRegen.Gold,
-                        city.cityResources.Wood, city.resourceRegen.Wood,
-                        city.cityResources.Stone, city.resourceRegen.Stone,
-                        city.cityResources.Mithril, city.resourceRegen.Mithril));
                     await PrivateReply(kvp.Key);
-
+                    await BroadcastCityStatus();
                     botReply += GetLangString(groupId, "IteratePlayerCityName", city.playerDetails.firstName, city.playerDetails.cityName);
                 }
+            }
+            else
+            {
+                ResourceRegen();
+                await BroadcastCityStatus();
             }
 
             botReply += GetLangString(groupId, "NextTurn", turn, turnInterval);
@@ -92,8 +89,28 @@ namespace NemesesGame
 
             //Insert turn implementation here
             await AskAction();
-            
 		}
+
+        void CityStatus (City city)
+        {
+            privateReply += string.Format(
+                    Program.GetLangString(groupId, "CurrentResources",
+                    city.playerDetails.cityName,
+                    city.cityResources.Gold, city.resourceRegen.Gold,
+                    city.cityResources.Wood, city.resourceRegen.Wood,
+                    city.cityResources.Stone, city.resourceRegen.Stone,
+                    city.cityResources.Mithril, city.resourceRegen.Mithril));
+            privateReply += string.Format(GetLangString(groupId, "NextTurn", turn, turnInterval));
+        }
+
+        void ResourceRegen ()
+        {
+            foreach (KeyValuePair<long, City> kvp in cities)
+            {
+                City city = kvp.Value;
+                city.cityResources += city.resourceRegen;
+            }
+        }
 
         public async Task ChooseName(long PlayerId, string NewCityName)
         {
@@ -101,6 +118,8 @@ namespace NemesesGame
             privateReply += GetLangString(groupId, "NameChosen", NewCityName);
             await PrivateReply(PlayerId);
         }
+
+        #region Behind the scenes
 
         private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
         {
@@ -110,12 +129,26 @@ namespace NemesesGame
             _timer.Enabled = true;
         }
 
+        async Task BroadcastCityStatus()
+        {
+            foreach (KeyValuePair<long, City> kvp in cities)
+            {
+                City city = kvp.Value;
+                CityStatus(city);
+
+                await PrivateReply(kvp.Key);
+            }
+        }
+
+        #endregion
+
         #region Inline Keyboard Interaction
         public async Task AskAction()
         {
             foreach (KeyValuePair<long, City> kvp in cities)
             {
                 privateReply += GetLangString(groupId, "AskAction");
+                //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
                 buttons.Add(new InlineKeyboardButton("Assign Task", $"AssignTask|{groupId}"));
                 buttons.Add(new InlineKeyboardButton("Your Status", $"YourStatus|{groupId}"));
@@ -124,10 +157,11 @@ namespace NemesesGame
                 await PrivateReply(kvp.Key, replyMarkup: menu);
             }
         }
-
+        
         public async Task AssignTask(long playerId, int messageId)
         {
             privateReply += GetLangString(groupId, "AssignTask");
+            //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
             buttons.Add(new InlineKeyboardButton("UpgradeProduction", $"UpgradeProduction|{groupId}"));
             buttons.Add(new InlineKeyboardButton("Raise Army", $"RaiseArmy|{groupId}"));
@@ -136,18 +170,108 @@ namespace NemesesGame
             await EditMessage(playerId, messageId, replyMarkup: menu);
         }
 
+        public async Task MyStatus(long playerId, int messageId)
+        {
+            City city = cities[playerId];
+            CityStatus(city);
+
+            await PrivateReply(playerId);
+        }
+
         public async Task UpgradeProduction(long playerId, int messageId)
         {
             privateReply += GetLangString(groupId, "UpgradeProductionHeader");
+            //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
-            // wood {0}/{1}/{2} each turn
-            string woodString = "Wood🌲: ";
+            // Creating strings for button, with all upgrades & current level
+            string woodString = "";
+            string stoneString = "";
+            string mithrilString = "";
+
+            for (byte index = 0; index < 3; index++)
+            {
+                ResourceType thisResourceType = ResourceType.Gold;
+                string thisResourceString = "";
+                string buttonString = "";
+                string resourceLevels = "";
+                string upgradeCost = "";
+                Resources cost = new Resources(0, 0, 0, 0);
+
+                if (index == 0)
+                {
+                    thisResourceType = ResourceType.Wood;
+                    thisResourceString = GetLangString(groupId, "Wood");
+                }
+                else if (index == 1)
+                {
+                    thisResourceType = ResourceType.Stone;
+                    thisResourceString = GetLangString(groupId, "Stone");
+                }
+                else if (index == 2)
+                {
+                    thisResourceType = ResourceType.Mithril;
+                    thisResourceString = GetLangString(groupId, "Mithril");
+                }
+
+                byte totalLvls = (byte)refResources.ResourceRegen[thisResourceType].Length;
+                byte currentLvl = cities[playerId].lvlResourceRegen[thisResourceType];
+
+                if (currentLvl < totalLvls - 1)
+                { cost = refResources.UpgradeCost[thisResourceType][currentLvl + 1]; }
+                else { }
+
+                for (byte i = 0; i < totalLvls; i++)
+                {
+                    string regen = refResources.ResourceRegen[thisResourceType][i].ToString();
+                    
+                    //Console.WriteLine("{0} regen level {1}: {2}", thisResourceString, i, regen);
+
+                    if (currentLvl == i)
+                    {
+                        regen = "[" + regen + "]";
+                    }
+                    resourceLevels += regen;
+
+                    if (i != totalLvls - 1)
+                    {
+                        resourceLevels += "/";
+                    }
+                }
+
+                if (cost != new Resources(0,0,0,0))
+                { upgradeCost = string.Format("{0}💰 {1}🌲 {2}🗿 {3}💎", cost.Gold, cost.Wood, cost.Stone, cost.Mithril); }
+                else
+                { upgradeCost = "Max Lvl"; }
+
+                Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
+
+                buttonString = GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, resourceLevels, upgradeCost);
+
+                //output
+                if (index == 0)
+                {
+                    woodString += buttonString;
+                }
+                else if (index == 1)
+                {
+                    stoneString += buttonString;
+                }
+                else if (index == 2)
+                {
+                    mithrilString += buttonString;
+                }
+            }
+
+            /*
+            woodString = "Wood🌲: ";
             byte woodLength = (byte) refResources.ResourceRegen[ResourceType.Wood].Length;
+            byte currentWoodLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood];
+            Resources woodUpgradeCost = refResources.UpgradeCost[ResourceType.Wood][currentWoodLevel];
             for (byte i = 0; i < woodLength; i++)
             {
                 string regen = refResources.ResourceRegen[ResourceType.Wood][i].ToString();
 
-                if (cities[playerId].lvlResourceRegen[ResourceType.Wood] == i)
+                if (currentWoodLevel == i)
                 {
 					regen = "[" + regen + "]";
                 }
@@ -155,10 +279,49 @@ namespace NemesesGame
 				if (i != woodLength - 1)
 				{
 					woodString += "/";
-				}
+                }
+            }
+            woodString += string.Format("Cost: {0}💰 {1}🌲 {2}🗿 {3}💎", woodUpgradeCost.Gold, woodUpgradeCost.Wood, woodUpgradeCost.Stone, woodUpgradeCost.Mithril);
+
+            stoneString = "Stone🗿: ";
+            byte stoneLength = (byte)refResources.ResourceRegen[ResourceType.Stone].Length;
+            for (byte i = 0; i < stoneLength; i++)
+            {
+                string regen = refResources.ResourceRegen[ResourceType.Stone][i].ToString();
+
+                if (cities[playerId].lvlResourceRegen[ResourceType.Stone] == i)
+                {
+                    regen = "[" + regen + "]";
+                }
+                stoneString += regen;
+                if (i != stoneLength - 1)
+                {
+                    stoneString += "/";
+                }
             }
 
-            buttons.Add(new InlineKeyboardButton(woodString, $"woodUpgrade|{groupId}"));
+            mithrilString = "Mithril💎: ";
+            byte mithrilLength = (byte)refResources.ResourceRegen[ResourceType.Mithril].Length;
+            for (byte i = 0; i < mithrilLength; i++)
+            {
+                string regen = refResources.ResourceRegen[ResourceType.Mithril][i].ToString();
+
+                if (cities[playerId].lvlResourceRegen[ResourceType.Mithril] == i)
+                {
+                    regen = "[" + regen + "]";
+                }
+                mithrilString += regen;
+                if (i != mithrilLength - 1)
+                {
+                    mithrilString += "/";
+                }
+            }
+            //end of iterating string creator
+            */
+
+            buttons.Add(new InlineKeyboardButton(woodString, $"resourceUpgrade|{groupId}|wood"));
+            buttons.Add(new InlineKeyboardButton(stoneString, $"resourceUpgrade|{groupId}|stone"));
+            buttons.Add(new InlineKeyboardButton(mithrilString, $"resourceUpgrade|{groupId}|mithril"));
             menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
 
             await EditMessage(playerId, messageId, replyMarkup: menu);
@@ -288,6 +451,14 @@ namespace NemesesGame
                 menu = null;
             }
         }
+        /// <summary>
+        /// This only uses 'privateReply' (assuming no Edit needed in groups...)
+        /// </summary>
+        /// <param name="chatId"></param>
+        /// <param name="msgId"></param>
+        /// <param name="replyMarkup"></param>
+        /// <param name="ParseMode"></param>
+        /// <returns></returns>
         async Task EditMessage(long chatId, int msgId, IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
         {
             await Program.EditMessage(chatId, msgId, privateReply, repMarkup: replyMarkup, _parseMode: ParseMode);

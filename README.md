@@ -2,11 +2,7 @@
 A turn-based Telegram game
 
 TODO 
-* Choose City name
-* Turn()
-* change Game.players[] to Game.cities[]
-* gamestatus (NotHosted, Hosted, Started)
-* only able /joingame in Groups
+* End InlineKeyboard interactions with normal chat
 
 MVP Target:
 

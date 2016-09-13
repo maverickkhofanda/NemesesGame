@@ -35,7 +35,8 @@ namespace NemesesGame
             }
         }
 
-		private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q"); //NemesesBot
+        public static long greyfader = 257394282;
+        private static readonly TelegramBotClient Bot = new TelegramBotClient("242212370:AAF2psk3nA3F1Q78rJTVpGQbb7fryiEBl9Q"); //NemesesBot
 		//private static readonly TelegramBotClient Bot = new TelegramBotClient("254602224:AAFgJBae5VsFQw34xlWk--qFlKXXX_J3TSk"); //SeaOfEdenBot
 
 		static void Main(string[] args)
@@ -65,8 +66,10 @@ namespace NemesesGame
 
             try
             {
-                await gamesHandler.CallbackQueryHandler(callbackQuery);
-            } catch (KeyNotFoundException) {
+               await gamesHandler.CallbackQueryHandler(callbackQuery);
+            }
+            catch (KeyNotFoundException)
+            {
                 string reply = GetLangString(0, "NotJoinedGame");
                 await SendMessage(senderId, reply);
             }
@@ -104,7 +107,7 @@ namespace NemesesGame
             }
             
         }
-
+        #region Messaging
         public static void LoadLanguage()
         {
             try
@@ -160,8 +163,8 @@ namespace NemesesGame
                         Random rnd = new Random();
                         int i = rnd.Next(0, arrayCount);
 
-                        Console.WriteLine("arrayCount: " + arrayCount);
-                        Console.WriteLine("Output on index: " + i);
+                        //Console.WriteLine("arrayCount: " + arrayCount);
+                        //Console.WriteLine("Output on index: " + i);
 
                         output = string.Format(token[i].ToString(), args);
 
@@ -181,9 +184,9 @@ namespace NemesesGame
                 else
                 {
                     output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\rThanks";
-                    return output;
-
                     throw new Exception($"Error getting string {key} with parameters {args.Aggregate((a, b) => a + "," + b.ToString())}");
+
+                    return output;
                 }
             }
             catch (Exception e)
@@ -203,8 +206,8 @@ namespace NemesesGame
             await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
             Console.WriteLine("Message editted at " + chatId);
         }
-
-		public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
+        #endregion
+        public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)
         {
             T[] newIndicesArray = new T[thisArray.Length - 1];
 
