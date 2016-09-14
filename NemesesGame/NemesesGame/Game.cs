@@ -56,11 +56,11 @@ namespace NemesesGame
 
             Timer(turnInterval, Turn);
 		}
-        
-        /// <summary>
-        /// What happens when 'Next Turn' triggered...
-        /// </summary>
-        public async void Turn(object sender, ElapsedEventArgs e)
+
+		/// <summary>
+		/// What happens when 'Next Turn' triggered...
+		/// </summary>
+		public async void Turn(object sender, ElapsedEventArgs e)
         {
             turn++;
 			gameStatus = GameStatus.InGame;
@@ -132,16 +132,20 @@ namespace NemesesGame
 
 		private bool PayCost(ref Resources currentResource, Resources resourceCost) // Pay resourceCost with currentResource
 		{
+			//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+			//Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
 			// If currentResource is not enough
 			if (currentResource < resourceCost)
 			{
-				// Message : Resource not enough
+				// Resource not enough
+				//Console.WriteLine("Not enough resources\r\n");
 				return false;
 			}
 			else // currentResource is enough, deduct resourceCost from currentResource
 			{
-				currentResource = currentResource - resourceCost;
-				// Message : Paid 'resourceCost'
+				currentResource = (currentResource - resourceCost);
+				//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+				// Paid 'resourceCost'
 				return true;
 			}
 		}
@@ -378,38 +382,58 @@ namespace NemesesGame
 
 		public async Task ResourceUpgrade(long playerId, int messageId, string resourceType)
 		{
-			byte newLevel = 99;
+			byte curLevel = 99;
 			switch (resourceType)
 			{
 				case "wood":
-					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood]++;
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Wood][newLevel]))
+					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood];
+					Console.WriteLine("newLevel : {0}\r\n", curLevel);
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Wood][++curLevel]))
 					{
 						// Increase the level
 						cities[playerId].lvlResourceRegen[ResourceType.Wood]++;
+						// Send message success
+						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
+					}
+					else
+					{
+						// Send message failure
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
 					}
 					break;
 				case "stone":
-					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Stone]++;
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Stone][newLevel]))
+					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Stone];
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Stone][++curLevel]))
 					{
 						// Increase the level
 						cities[playerId].lvlResourceRegen[ResourceType.Stone]++;
+						// Send message success
+						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
+					}
+					else
+					{
+						// Send message failure
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
 					}
 					break;
 				case "mithril":
-					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Mithril]++;
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Mithril][newLevel]))
+					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Mithril];
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Mithril][++curLevel]))
 					{
 						// Increase the level
 						cities[playerId].lvlResourceRegen[ResourceType.Mithril]++;
+						// Send message success
+						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
+					}
+					else
+					{
+						// Send message failure
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
 					}
 					break;
 			}
 			// Update the player's resource regen
 			cities[playerId].UpdateRegen();
-			// Send message
-			privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, newLevel);
 			CityStatus(cities[playerId]);
 			// Assign Task
 			await AssignTask(playerId, messageId);
