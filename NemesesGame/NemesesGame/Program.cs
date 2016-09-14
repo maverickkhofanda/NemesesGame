@@ -88,7 +88,7 @@ namespace NemesesGame
             } catch { }
 
             // BotCommandHandler
-            if (message.Text != null & entityType == "BotCommand")
+            if (message.Text != null && entityType == "BotCommand")
             {
                 try
                 {

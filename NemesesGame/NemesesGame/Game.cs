@@ -146,7 +146,7 @@ namespace NemesesGame
         #region Inline Keyboard Interaction
         public async Task AskAction(long playerId = 0, int messageId = 0)
         {
-            if (playerId != 0 & messageId != 0)
+            if (playerId != 0 && messageId != 0)
             {
                 // this 'if' block can be used after one task has finished
 

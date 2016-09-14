@@ -78,9 +78,9 @@ namespace NemesesGame
                     {
                         if (gameDict[thisChatId].gameStatus == GameStatus.Starting)
                         {
-                            try
-                            {
-                                if (args[1] != null | args[1] != "")
+							try
+							{
+								if (String.IsNullOrWhiteSpace(args[1])) // bug
                                 {
                                     string newCityName = "";
                                     var newArgs = Program.RemoveElement(args, 0);
@@ -123,7 +123,7 @@ namespace NemesesGame
 
                 case "joingame":
                     // check if inGroup or inSuperGroup
-                    if (message.Chat.Type == ChatType.Group | message.Chat.Type == ChatType.Supergroup)
+                    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
                     {
                         //Check if there is a lobby for that thisChatId
                         if (!gameDict.ContainsKey(thisChatId))
@@ -143,7 +143,7 @@ namespace NemesesGame
 
                 case "startgame":
                     // check if inGroup or inSuperGroup
-                    if (message.Chat.Type == ChatType.Group | message.Chat.Type == ChatType.Supergroup)
+                    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
                     {
                         if (gameDict.ContainsKey(thisChatId))
                         {
