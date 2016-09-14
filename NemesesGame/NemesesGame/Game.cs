@@ -89,7 +89,7 @@ namespace NemesesGame
 			await BotReply(groupId);
 
             //Insert turn implementation here
-            await AskAction();
+            await MainMenu();
 		}
 
         void CityStatus (City city)
@@ -164,13 +164,13 @@ namespace NemesesGame
         #endregion
 
         #region Inline Keyboard Interaction
-        public async Task AskAction(long playerId = 0, int messageId = 0)
+        public async Task MainMenu(long playerId = 0, int messageId = 0)
         {
             if (playerId != 0 && messageId != 0)
             {
                 // this 'if' block can be used after one task has finished
 
-                privateReply += GetLangString(groupId, "AskAction");
+                privateReply += GetLangString(groupId, "MainMenu");
                 //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
                 buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
@@ -188,7 +188,7 @@ namespace NemesesGame
             {
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    privateReply += GetLangString(groupId, "AskAction");
+                    privateReply += GetLangString(groupId, "MainMenu");
                     //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
                     buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
@@ -398,7 +398,7 @@ namespace NemesesGame
 					else
 					{
 						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
 					}
 					break;
 				case "stone":
@@ -413,7 +413,7 @@ namespace NemesesGame
 					else
 					{
 						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
 					}
 					break;
 				case "mithril":
@@ -428,7 +428,7 @@ namespace NemesesGame
 					else
 					{
 						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType);
+						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
 					}
 					break;
 			}
@@ -436,7 +436,7 @@ namespace NemesesGame
 			cities[playerId].UpdateRegen();
 			CityStatus(cities[playerId]);
 			// Assign Task
-			await AssignTask(playerId, messageId);
+			await MainMenu(playerId, messageId);
 		}
 
         public async Task Back(long playerId, int messageId)
@@ -453,11 +453,16 @@ namespace NemesesGame
 
         public async Task TimeUp()
         {
-            foreach (KeyValuePair<long, City> kvp in cities)
+            // let's kill this 2 times
+            for (byte i = 0; i < 2; i++)
             {
-                privateReply += GetLangString(groupId, "TimeUp", turn - 1);
-                await EditMessage(kvp.Key, kvp.Value.msgId);
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    privateReply += GetLangString(groupId, "TimeUp", turn - 1);
+                    await EditMessage(kvp.Key, kvp.Value.msgId);
+                }
             }
+            
         }
 
         #endregion
