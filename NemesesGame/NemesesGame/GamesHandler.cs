@@ -80,7 +80,7 @@ namespace NemesesGame
                         {
 							try
 							{
-								if (String.IsNullOrWhiteSpace(args[1])) // bug
+								if (!String.IsNullOrWhiteSpace(args[1]))
                                 {
                                     string newCityName = "";
                                     var newArgs = Program.RemoveElement(args, 0);
@@ -118,7 +118,7 @@ namespace NemesesGame
                         await BotReply(thisChatId);
                     }
                     break;
-
+                
                 #region lobby commands
 
                 case "joingame":
@@ -251,6 +251,15 @@ namespace NemesesGame
 
             switch (args[0])
             {
+                #region game callbacks
+
+                case "ResourceUpgrade":
+                    // resourceUpgrade
+                    break;
+
+                #endregion
+
+                #region menu callbacks
                 case "AssignTask":
                     await gameDict[groupId].AssignTask(senderId, msgId);
                     break;
@@ -269,6 +278,8 @@ namespace NemesesGame
 
                 default:
                     break;
+
+                #endregion
             }
         }
 

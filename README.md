@@ -2,10 +2,9 @@
 A turn-based Telegram game
 
 TODO 
-* End InlineKeyboard interactions with normal chat
-
-BUGS
-* Game.UpgradeProduction() --> Wood Cost = Max Lvl (instead of cost)
+* Avoid truncating (limit Button string to 25-30 chars)
+* choosename cannot be null
+* Bug? TimeUp
 
 MVP Target:
 

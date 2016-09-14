@@ -120,6 +120,11 @@ namespace NemesesGame
             await PrivateReply(PlayerId);
         }
 
+        public async Task UpgradeProduction()
+        {
+
+        }
+
         #region Behind the scenes
 
         private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
@@ -291,6 +296,7 @@ namespace NemesesGame
                     mithrilString += buttonString;
                 }
             }
+            //end of string generator
 
             /*// Unused code
             woodString = "Wood🌲: ";
@@ -349,9 +355,9 @@ namespace NemesesGame
             //end of iterating string creator
             */
 
-            buttons.Add(new InlineKeyboardButton(woodString, $"resourceUpgrade|{groupId}|wood"));
-            buttons.Add(new InlineKeyboardButton(stoneString, $"resourceUpgrade|{groupId}|stone"));
-            buttons.Add(new InlineKeyboardButton(mithrilString, $"resourceUpgrade|{groupId}|mithril"));
+            buttons.Add(new InlineKeyboardButton(woodString, $"ResourceUpgrade|{groupId}|wood"));
+            buttons.Add(new InlineKeyboardButton(stoneString, $"ResourceUpgrade|{groupId}|stone"));
+            buttons.Add(new InlineKeyboardButton(mithrilString, $"ResourceUpgrade|{groupId}|mithril"));
             buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
             menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
 
