@@ -51,6 +51,14 @@ namespace NemesesGame
             resourceRegen.Mithril = refResources.ResourceRegen[ResourceType.Mithril][lvlResourceRegen[ResourceType.Mithril]];
         }
 
+		public void UpdateRegen()
+		{
+			resourceRegen.Gold = refResources.GoldRegenDefault;
+			resourceRegen.Wood = refResources.ResourceRegen[ResourceType.Wood][lvlResourceRegen[ResourceType.Wood]];
+			resourceRegen.Stone = refResources.ResourceRegen[ResourceType.Stone][lvlResourceRegen[ResourceType.Stone]];
+			resourceRegen.Mithril = refResources.ResourceRegen[ResourceType.Mithril][lvlResourceRegen[ResourceType.Mithril]];
+		}
+
         /// <summary>
         /// Saves reply history for 'Back' button
         /// </summary>

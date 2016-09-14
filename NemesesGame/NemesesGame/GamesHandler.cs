@@ -254,7 +254,7 @@ namespace NemesesGame
                 #region game callbacks
 
                 case "ResourceUpgrade":
-                    // resourceUpgrade
+					await gameDict[groupId].ResourceUpgrade(senderId, msgId, args[2]);
                     break;
 
                 #endregion

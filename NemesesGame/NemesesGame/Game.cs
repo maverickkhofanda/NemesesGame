@@ -120,11 +120,6 @@ namespace NemesesGame
             await PrivateReply(PlayerId);
         }
 
-        public async Task UpgradeProduction()
-        {
-
-        }
-
         #region Behind the scenes
 
         private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
@@ -134,6 +129,22 @@ namespace NemesesGame
             _timer.Interval = timerInterval * 1000;
             _timer.Enabled = true;
         }
+
+		private bool PayCost(ref Resources currentResource, Resources resourceCost) // Pay resourceCost with currentResource
+		{
+			// If currentResource is not enough
+			if (currentResource < resourceCost)
+			{
+				// Message : Resource not enough
+				return false;
+			}
+			else // currentResource is enough, deduct resourceCost from currentResource
+			{
+				currentResource = currentResource - resourceCost;
+				// Message : Paid 'resourceCost'
+				return true;
+			}
+		}
 
         async Task BroadcastCityStatus()
         {
@@ -364,6 +375,45 @@ namespace NemesesGame
             cities[playerId].AddReplyHistory(menu, privateReply);
             await EditMessage(playerId, messageId, replyMarkup: menu);
         }
+
+		public async Task ResourceUpgrade(long playerId, int messageId, string resourceType)
+		{
+			byte newLevel = 99;
+			switch (resourceType)
+			{
+				case "wood":
+					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood]++;
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Wood][newLevel]))
+					{
+						// Increase the level
+						cities[playerId].lvlResourceRegen[ResourceType.Wood]++;
+					}
+					break;
+				case "stone":
+					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Stone]++;
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Stone][newLevel]))
+					{
+						// Increase the level
+						cities[playerId].lvlResourceRegen[ResourceType.Stone]++;
+					}
+					break;
+				case "mithril":
+					newLevel = cities[playerId].lvlResourceRegen[ResourceType.Mithril]++;
+					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Mithril][newLevel]))
+					{
+						// Increase the level
+						cities[playerId].lvlResourceRegen[ResourceType.Mithril]++;
+					}
+					break;
+			}
+			// Update the player's resource regen
+			cities[playerId].UpdateRegen();
+			// Send message
+			privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, newLevel);
+			CityStatus(cities[playerId]);
+			// Assign Task
+			await AssignTask(playerId, messageId);
+		}
 
         public async Task Back(long playerId, int messageId)
         {

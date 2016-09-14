@@ -29,6 +29,7 @@
 		"---REGION : In-game Headers---" : "",
 		"PlayerListHeader" : "Players in game:\r\n",
 		"ResourceUpgradePriceCost" : "{0}: {1}\n\r(Cost: {2})",
+		"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
 		"UpgradeProductionHeader" : "Which resource production you want to upgrade?",
 		"AskAction" : [
 			"What wilt thou do milord?",
