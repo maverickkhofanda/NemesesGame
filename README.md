@@ -2,9 +2,15 @@
 A turn-based Telegram game
 
 TODO 
+* Add exception catcher on PayCost (cost - 0)
+* Multiple BroadcastCityStatus(output)
+* Bug PayCost(): currentResources doesn't cut
+* choosename limit length
+
 * Avoid truncating (limit Button string to 25-30 chars)
 * choosename cannot be null
 * Bug? TimeUp
+* City.cs --> erase 'city' on cityResources & cityArmytel
 
 MVP Target:
 
