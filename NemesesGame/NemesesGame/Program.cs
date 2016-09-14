@@ -100,12 +100,6 @@ namespace NemesesGame
                     await SendMessage(chatId, reply);
                 }
             }
-			else
-			{
-                Console.WriteLine("Unhandled message received from " + chatId);
-                await SendMessage(chatId, gameInfo);
-            }
-            
         }
         #region Messaging
         public static void LoadLanguage()
@@ -197,14 +191,56 @@ namespace NemesesGame
 
 		public static async Task SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-			await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
-            Console.WriteLine("Reply to " + chatId + " has been sent!");
+            byte count = 0;
+            try
+            {
+                await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+                Console.WriteLine("Reply to " + chatId + " has been sent!");
+            }
+            catch (Telegram.Bot.Exceptions.ApiRequestException e)
+            {
+                count++;
+                if (count <= 10)
+                {
+                    Console.WriteLine("Error SendMessage to {0} ({1})", chatId, e.ToString());
+                    await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+                }
+                else
+                {
+                    for (byte i = 0; i < 10; i++)
+                    {
+                        Console.WriteLine("Telegram ApiRequestException can't be handled\r\nPlease break operation");
+                    }
+                    
+                }
+            }
         }
 
         public static async Task EditMessage(long chatId, int msgId, string messageContent, IReplyMarkup repMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
-            await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
-            Console.WriteLine("Message editted at " + chatId);
+            byte count = 0;
+            try
+            {
+                await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+                Console.WriteLine("Message editted at " + chatId);
+            }
+            catch (Telegram.Bot.Exceptions.ApiRequestException e)
+            {
+                count++;
+                if (count <= 10)
+                {
+                    Console.WriteLine("Error EditMessage to {0} ({1})", chatId, e.ToString());
+                    await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+                }
+                else
+                {
+                    for (byte i = 0; i < 10; i++)
+                    {
+                        Console.WriteLine("Telegram ApiRequestException can't be handled\r\nPlease break operation");
+                    }
+
+                }
+            }
         }
         #endregion
         public static T[] RemoveElement<T>(T[] thisArray, int RemoveAt)

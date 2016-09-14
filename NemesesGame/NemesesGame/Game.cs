@@ -80,6 +80,7 @@ namespace NemesesGame
             }
             else
             {
+                await TimeUp();
                 ResourceRegen();
                 await BroadcastCityStatus();
             }
@@ -143,18 +144,44 @@ namespace NemesesGame
         #endregion
 
         #region Inline Keyboard Interaction
-        public async Task AskAction()
+        public async Task AskAction(long playerId = 0, int messageId = 0)
         {
-            foreach (KeyValuePair<long, City> kvp in cities)
+            if (playerId != 0 & messageId != 0)
             {
+                // this 'if' block can be used after one task has finished
+
                 privateReply += GetLangString(groupId, "AskAction");
                 //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
-                buttons.Add(new InlineKeyboardButton("Assign Task", $"AssignTask|{groupId}"));
-                buttons.Add(new InlineKeyboardButton("Your Status", $"YourStatus|{groupId}"));
+                buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
+                buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
+                // no Back button
                 menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
-                
-                await PrivateReply(kvp.Key, replyMarkup: menu);
+
+                //intentionally doubled
+                cities[playerId].AddReplyHistory(menu, privateReply);
+                cities[playerId].AddReplyHistory(menu, privateReply);
+
+                await EditMessage(playerId, messageId, replyMarkup: menu);
+            }
+            else
+            {
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    privateReply += GetLangString(groupId, "AskAction");
+                    //privateReply += GetLangString(groupId, "ThisTurn", turn);
+
+                    buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
+                    buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
+                    // no Back button
+                    menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
+
+                    //intentionally doubled
+                    cities[kvp.Key].AddReplyHistory(menu, privateReply);
+                    cities[kvp.Key].AddReplyHistory(menu, privateReply);
+
+                    await PrivateReply(kvp.Key, replyMarkup: menu);
+                }
             }
         }
         
@@ -163,10 +190,12 @@ namespace NemesesGame
             privateReply += GetLangString(groupId, "AssignTask");
             //privateReply += GetLangString(groupId, "ThisTurn", turn);
 
-            buttons.Add(new InlineKeyboardButton("UpgradeProduction", $"UpgradeProduction|{groupId}"));
-            buttons.Add(new InlineKeyboardButton("Raise Army", $"RaiseArmy|{groupId}"));
+            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
+            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "RaiseArmy"), $"RaiseArmy|{groupId}"));
+            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
             menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
 
+            cities[playerId].AddReplyHistory(menu, privateReply);
             await EditMessage(playerId, messageId, replyMarkup: menu);
         }
 
@@ -188,6 +217,7 @@ namespace NemesesGame
             string stoneString = "";
             string mithrilString = "";
 
+            // Generate woodString, stoneString, mithrilString
             for (byte index = 0; index < 3; index++)
             {
                 ResourceType thisResourceType = ResourceType.Gold;
@@ -262,7 +292,7 @@ namespace NemesesGame
                 }
             }
 
-            /*
+            /*// Unused code
             woodString = "Wood🌲: ";
             byte woodLength = (byte) refResources.ResourceRegen[ResourceType.Wood].Length;
             byte currentWoodLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood];
@@ -322,9 +352,32 @@ namespace NemesesGame
             buttons.Add(new InlineKeyboardButton(woodString, $"resourceUpgrade|{groupId}|wood"));
             buttons.Add(new InlineKeyboardButton(stoneString, $"resourceUpgrade|{groupId}|stone"));
             buttons.Add(new InlineKeyboardButton(mithrilString, $"resourceUpgrade|{groupId}|mithril"));
+            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
             menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
 
+            cities[playerId].AddReplyHistory(menu, privateReply);
             await EditMessage(playerId, messageId, replyMarkup: menu);
+        }
+
+        public async Task Back(long playerId, int messageId)
+        {
+            // intentionally doubled
+            menu = cities[playerId].menuHistory.Pop();
+            menu = cities[playerId].menuHistory.Pop();
+
+            privateReply = cities[playerId].replyHistory.Pop();
+            privateReply = cities[playerId].replyHistory.Pop();
+            
+            await EditMessage(playerId, messageId, replyMarkup: menu);
+        }
+
+        public async Task TimeUp()
+        {
+            foreach (KeyValuePair<long, City> kvp in cities)
+            {
+                privateReply += GetLangString(groupId, "TimeUp", turn - 1);
+                await EditMessage(kvp.Key, kvp.Value.msgId);
+            }
         }
 
         #endregion
@@ -432,8 +485,12 @@ namespace NemesesGame
 
         async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-			await Program.SendMessage(groupId, botReply, replyMarkup, _parseMode);
-			botReply = ""; //Reset botReply string
+            string replyString = botReply;
+
+            botReply = "";
+			await Program.SendMessage(groupId, replyString, replyMarkup, _parseMode);
+			replyString = "";
+
             if (buttons != null)
             {
                 buttons.Clear();
@@ -443,8 +500,12 @@ namespace NemesesGame
 
         async Task PrivateReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
-            await Program.SendMessage(groupId, privateReply, replyMarkup, _parseMode);
-            privateReply = ""; //Reset botReply string
+            string replyString = privateReply;
+
+            privateReply = "";
+            await Program.SendMessage(groupId, replyString, replyMarkup, _parseMode);
+            replyString = "";
+
             if (buttons != null)
             {
                 buttons.Clear();
@@ -461,8 +522,12 @@ namespace NemesesGame
         /// <returns></returns>
         async Task EditMessage(long chatId, int msgId, IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
         {
-            await Program.EditMessage(chatId, msgId, privateReply, repMarkup: replyMarkup, _parseMode: ParseMode);
-            privateReply = ""; //Reset botReply string
+            string replyString = privateReply;
+
+            privateReply = "";
+            await Program.EditMessage(chatId, msgId, replyString, repMarkup: replyMarkup, _parseMode: ParseMode);
+            replyString = "";
+
             if (buttons != null)
             {
                 buttons.Clear();

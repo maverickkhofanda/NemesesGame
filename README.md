@@ -4,6 +4,9 @@ A turn-based Telegram game
 TODO 
 * End InlineKeyboard interactions with normal chat
 
+BUGS
+* Game.UpgradeProduction() --> Wood Cost = Max Lvl (instead of cost)
+
 MVP Target:
 
 1. Player's resources & army

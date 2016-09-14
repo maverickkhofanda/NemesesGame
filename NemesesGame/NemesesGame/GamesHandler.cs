@@ -235,12 +235,19 @@ namespace NemesesGame
             var senderLastName = callbackQuery.From.LastName;
             var senderName = senderFirstName + " " + senderLastName;
 
-            Console.WriteLine("\r\nCallbackQuery received from " + senderName + " (" + senderId + ")");
-            Console.WriteLine("CallbackQuery data : " + callbackQuery.Data);
-
             var args = callbackQuery.Data.Split('|');
             // QueryCommand = args[0]
             long groupId = long.Parse(args[1]);
+
+            
+            if (gameDict[groupId].cities[senderId].msgId != msgId)
+            {
+                gameDict[groupId].cities[senderId].msgId = msgId;
+            }
+            
+              
+            Console.WriteLine("\r\nCallbackQuery received from " + senderName + " (" + senderId + ")");
+            Console.WriteLine("CallbackQuery data : " + callbackQuery.Data);
 
             switch (args[0])
             {
@@ -256,6 +263,10 @@ namespace NemesesGame
                     await gameDict[groupId].MyStatus(senderId, msgId);
                     break;
 
+                case "Back":
+                    await gameDict[groupId].Back(senderId, msgId);
+                    break;
+
                 default:
                     break;
             }
@@ -268,13 +279,10 @@ namespace NemesesGame
 
         async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
-            await Program.SendMessage(groupId, reply, replyMarkup, _parseMode);
-            reply += ""; //Reset reply string
-        }
-
-        async Task EditMessage(long chatId, int msgId, string messageContent, IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
-        {
-            await Program.EditMessage(chatId, msgId, messageContent, repMarkup: replyMarkup, _parseMode: ParseMode);
+            string replyString = reply;
+            reply = "";
+            await Program.SendMessage(groupId, replyString, replyMarkup, _parseMode);
+            replyString = "";
         }
     }
 }

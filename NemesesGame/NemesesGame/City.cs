@@ -20,8 +20,10 @@ namespace NemesesGame
         RefResources refResources = new RefResources();
         public PlayerDetails playerDetails = new PlayerDetails();
 
-        string privateReply = "";
-
+        public int msgId = 0;
+        public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
+        public Stack<string> replyHistory = new Stack<string>(10);
+        
         /* Unimplemented yet
          * public Army cityArmy;
          * public Upgrades cityUpgrades;
@@ -49,15 +51,20 @@ namespace NemesesGame
             resourceRegen.Mithril = refResources.ResourceRegen[ResourceType.Mithril][lvlResourceRegen[ResourceType.Mithril]];
         }
 
+        /// <summary>
+        /// Saves reply history for 'Back' button
+        /// </summary>
+        /// <param name="menu">InlineKeyboardMarkup to save</param>
+        /// <param name="reply">Reply string to save</param>
+        public void AddReplyHistory(InlineKeyboardMarkup menu, string reply)
+        {
+            menuHistory.Push(menu);
+            replyHistory.Push(reply);
+        }
+
         string GetLangString(long chatId, string key, params object[] args)
         {
             return Program.GetLangString(chatId, key, args);
-        }
-
-        async Task PrivateReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
-        {
-            await Program.SendMessage(groupId, privateReply, replyMarkup, _parseMode);
-            privateReply += ""; //Reset reply string
         }
     }
 }
