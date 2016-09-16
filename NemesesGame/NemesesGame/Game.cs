@@ -22,9 +22,9 @@ namespace NemesesGame
         RefResources refResources = new RefResources();
 
 		private string botReply = "";
-        private string privateReply = "";
-        List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
-        InlineKeyboardMarkup menu;
+        //private string privateReply = "";
+        //List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
+        //InlineKeyboardMarkup menu;
 
         public Dictionary<long, City> cities = new Dictionary<long, City>();
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
@@ -71,11 +71,13 @@ namespace NemesesGame
 
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    City city = kvp.Value;
-                    privateReply += string.Format(GetLangString(groupId, "StartGamePrivate", city.playerDetails.cityName));
-                    await PrivateReply(kvp.Key);
+                    //CityChatHandler chat = kvp.Value.chat;
+                    PlayerDetails pDetails = kvp.Value.playerDetails;
+
+                    kvp.Value.chat.AddReply(GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
+                    await kvp.Value.chat.SendReply();
                     await BroadcastCityStatus();
-                    botReply += GetLangString(groupId, "IteratePlayerCityName", city.playerDetails.firstName, city.playerDetails.cityName);
+                    botReply += GetLangString(groupId, "IteratePlayerCityName", pDetails.firstName, pDetails.cityName);
                 }
             }
             else
@@ -92,16 +94,17 @@ namespace NemesesGame
             await MainMenu();
 		}
 
-        void CityStatus (City city)
+        void CityStatus (long playerId)
         {
-            privateReply += string.Format(
-                    Program.GetLangString(groupId, "CurrentResources",
+            City city = cities[playerId];
+
+            city.chat.AddReply(GetLangString(groupId, "CurrentResources",
                     city.playerDetails.cityName,
-                    city.cityResources.Gold, city.resourceRegen.Gold,
-                    city.cityResources.Wood, city.resourceRegen.Wood,
-                    city.cityResources.Stone, city.resourceRegen.Stone,
-                    city.cityResources.Mithril, city.resourceRegen.Mithril));
-            privateReply += string.Format(GetLangString(groupId, "NextTurn", turn, turnInterval));
+                    city._resources.Gold, city.resourceRegen.Gold,
+                    city._resources.Wood, city.resourceRegen.Wood,
+                    city._resources.Stone, city.resourceRegen.Stone,
+                    city._resources.Mithril, city.resourceRegen.Mithril));
+            city.chat.AddReply(GetLangString(groupId, "NextTurn", turn, turnInterval));
         }
 
         void ResourceRegen ()
@@ -109,15 +112,16 @@ namespace NemesesGame
             foreach (KeyValuePair<long, City> kvp in cities)
             {
                 City city = kvp.Value;
-                city.cityResources += city.resourceRegen;
+                city._resources += city.resourceRegen;
             }
         }
 
-        public async Task ChooseName(long PlayerId, string NewCityName)
+        public async Task ChooseName(long playerId, string NewCityName)
         {
-            cities[PlayerId].playerDetails.cityName = NewCityName;
-            privateReply += GetLangString(groupId, "NameChosen", NewCityName);
-            await PrivateReply(PlayerId);
+            cities[playerId].playerDetails.cityName = NewCityName;
+            cities[playerId].chat.AddReply(GetLangString(groupId, "NameChosen", NewCityName));
+
+            await cities[playerId].chat.SendReply();
         }
 
         #region Behind the scenes
@@ -130,15 +134,17 @@ namespace NemesesGame
             _timer.Enabled = true;
         }
 
-		private bool PayCost(ref Resources currentResource, Resources resourceCost) // Pay resourceCost with currentResource
+		private bool PayCost(ref Resources currentResource, Resources resourceCost, long playerId) // Pay resourceCost with currentResource
 		{
-			//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
-			//Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
+            //Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+            //Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
+            
 			// If currentResource is not enough
 			if (currentResource < resourceCost)
 			{
-				// Resource not enough
-				//Console.WriteLine("Not enough resources\r\n");
+                // Resource not enough
+                //Console.WriteLine("Not enough resources\r\n");
+                cities[playerId].chat.AddReply(GetLangString(groupId, "NotEnoughResources"));
 				return false;
 			}
 			else // currentResource is enough, deduct resourceCost from currentResource
@@ -154,10 +160,10 @@ namespace NemesesGame
         {
             foreach (KeyValuePair<long, City> kvp in cities)
             {
-                City city = kvp.Value;
-                CityStatus(city);
+                
+                CityStatus(kvp.Key);
 
-                await PrivateReply(kvp.Key);
+                await kvp.Value.chat.SendReply();
             }
         }
 
@@ -165,72 +171,70 @@ namespace NemesesGame
 
         #region Inline Keyboard Interaction
         public async Task MainMenu(long playerId = 0, int messageId = 0)
-        {
+        {   
             if (playerId != 0 && messageId != 0)
             {
                 // this 'if' block can be used after one task has finished
+                SetMainMenu(playerId);
 
-                privateReply += GetLangString(groupId, "MainMenu");
-                //privateReply += GetLangString(groupId, "ThisTurn", turn);
-
-                buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
-                buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
-                // no Back button
-                menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
-
-                //intentionally doubled
-                cities[playerId].AddReplyHistory(menu, privateReply);
-                cities[playerId].AddReplyHistory(menu, privateReply);
-
-                await EditMessage(playerId, messageId, replyMarkup: menu);
+                await cities[playerId].chat.EditMessage();
             }
             else
             {
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    privateReply += GetLangString(groupId, "MainMenu");
-                    //privateReply += GetLangString(groupId, "ThisTurn", turn);
+                    CityChatHandler chat = cities[kvp.Key].chat;
+                    chat.ClearReplyHistory();
+                    SetMainMenu(kvp.Key);
 
-                    buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
-                    buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
-                    // no Back button
-                    menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
-
-                    //intentionally doubled
-                    cities[kvp.Key].AddReplyHistory(menu, privateReply);
-                    cities[kvp.Key].AddReplyHistory(menu, privateReply);
-
-                    await PrivateReply(kvp.Key, replyMarkup: menu);
+                    await chat.SendReply();
                 }
             }
+        }
+
+        //this method is the child of and only used in MainMenu()
+        void SetMainMenu(long playerId)
+        {
+            CityChatHandler chat = cities[playerId].chat;
+            chat.AddReply(GetLangString(groupId, "MainMenu"));
+
+            chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
+            chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
+            // no Back button
+            chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
+
+            //intentionally doubled ==> trying 1 reply history
+            chat.AddReplyHistory();
+            //chat.AddReplyHistory();
         }
         
         public async Task AssignTask(long playerId, int messageId)
         {
-            privateReply += GetLangString(groupId, "AssignTask");
-            //privateReply += GetLangString(groupId, "ThisTurn", turn);
+            CityChatHandler chat = cities[playerId].chat;
 
-            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
-            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "RaiseArmy"), $"RaiseArmy|{groupId}"));
-            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
-            menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
+            chat.AddReply(GetLangString(groupId, "AssignTask"));
 
-            cities[playerId].AddReplyHistory(menu, privateReply);
-            await EditMessage(playerId, messageId, replyMarkup: menu);
+            chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
+            chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "RaiseArmy"), $"RaiseArmy|{groupId}"));
+            chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+            chat.SetMenu();
+
+            cities[playerId].chat.AddReplyHistory();
+            await cities[playerId].chat.EditMessage();
         }
 
         public async Task MyStatus(long playerId, int messageId)
         {
-            City city = cities[playerId];
-            CityStatus(city);
+            CityStatus(playerId);
 
-            await PrivateReply(playerId);
+            await cities[playerId].chat.SendReply();
         }
 
         public async Task UpgradeProduction(long playerId, int messageId)
         {
-            privateReply += GetLangString(groupId, "UpgradeProductionHeader");
-            //privateReply += GetLangString(groupId, "ThisTurn", turn);
+            CityChatHandler chat = cities[playerId].chat;
+
+            chat.AddReply(GetLangString(groupId, "UpgradeProductionHeader"));
 
             // Creating strings for button, with all upgrades & current level
             string woodString = "";
@@ -293,7 +297,7 @@ namespace NemesesGame
                 else
                 { upgradeCost = "Max Lvl"; }
 
-                Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
+                //Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
 
                 buttonString = GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, resourceLevels, upgradeCost);
 
@@ -312,154 +316,86 @@ namespace NemesesGame
                 }
             }
             //end of string generator
+            
 
-            /*// Unused code
-            woodString = "Wood🌲: ";
-            byte woodLength = (byte) refResources.ResourceRegen[ResourceType.Wood].Length;
-            byte currentWoodLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood];
-            Resources woodUpgradeCost = refResources.UpgradeCost[ResourceType.Wood][currentWoodLevel];
-            for (byte i = 0; i < woodLength; i++)
-            {
-                string regen = refResources.ResourceRegen[ResourceType.Wood][i].ToString();
+            chat.buttons.Add(new InlineKeyboardButton(woodString, $"ResourceUpgrade|{groupId}|Wood"));
+            chat.buttons.Add(new InlineKeyboardButton(stoneString, $"ResourceUpgrade|{groupId}|Stone"));
+            chat.buttons.Add(new InlineKeyboardButton(mithrilString, $"ResourceUpgrade|{groupId}|Mithril"));
+            chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+            chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
 
-                if (currentWoodLevel == i)
-                {
-					regen = "[" + regen + "]";
-                }
-				woodString += regen;
-				if (i != woodLength - 1)
-				{
-					woodString += "/";
-                }
-            }
-            woodString += string.Format("Cost: {0}💰 {1}🌲 {2}🗿 {3}💎", woodUpgradeCost.Gold, woodUpgradeCost.Wood, woodUpgradeCost.Stone, woodUpgradeCost.Mithril);
-
-            stoneString = "Stone🗿: ";
-            byte stoneLength = (byte)refResources.ResourceRegen[ResourceType.Stone].Length;
-            for (byte i = 0; i < stoneLength; i++)
-            {
-                string regen = refResources.ResourceRegen[ResourceType.Stone][i].ToString();
-
-                if (cities[playerId].lvlResourceRegen[ResourceType.Stone] == i)
-                {
-                    regen = "[" + regen + "]";
-                }
-                stoneString += regen;
-                if (i != stoneLength - 1)
-                {
-                    stoneString += "/";
-                }
-            }
-
-            mithrilString = "Mithril💎: ";
-            byte mithrilLength = (byte)refResources.ResourceRegen[ResourceType.Mithril].Length;
-            for (byte i = 0; i < mithrilLength; i++)
-            {
-                string regen = refResources.ResourceRegen[ResourceType.Mithril][i].ToString();
-
-                if (cities[playerId].lvlResourceRegen[ResourceType.Mithril] == i)
-                {
-                    regen = "[" + regen + "]";
-                }
-                mithrilString += regen;
-                if (i != mithrilLength - 1)
-                {
-                    mithrilString += "/";
-                }
-            }
-            //end of iterating string creator
-            */
-
-            buttons.Add(new InlineKeyboardButton(woodString, $"ResourceUpgrade|{groupId}|wood"));
-            buttons.Add(new InlineKeyboardButton(stoneString, $"ResourceUpgrade|{groupId}|stone"));
-            buttons.Add(new InlineKeyboardButton(mithrilString, $"ResourceUpgrade|{groupId}|mithril"));
-            buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
-            menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
-
-            cities[playerId].AddReplyHistory(menu, privateReply);
-            await EditMessage(playerId, messageId, replyMarkup: menu);
+            chat.AddReplyHistory();
+            await chat.EditMessage();
         }
 
-		public async Task ResourceUpgrade(long playerId, int messageId, string resourceType)
+		public async Task ResourceUpgrade(long playerId, int messageId, string _resourceType)
 		{
 			byte curLevel = 99;
-			switch (resourceType)
-			{
-				case "wood":
-					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Wood];
-					Console.WriteLine("newLevel : {0}\r\n", curLevel);
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Wood][++curLevel]))
-					{
-						// Increase the level
-						cities[playerId].lvlResourceRegen[ResourceType.Wood]++;
-						// Send message success
-						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
-					}
-					else
-					{
-						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
-					}
-					break;
-				case "stone":
-					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Stone];
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Stone][++curLevel]))
-					{
-						// Increase the level
-						cities[playerId].lvlResourceRegen[ResourceType.Stone]++;
-						// Send message success
-						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
-					}
-					else
-					{
-						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
-					}
-					break;
-				case "mithril":
-					curLevel = cities[playerId].lvlResourceRegen[ResourceType.Mithril];
-					if (PayCost(ref cities[playerId].cityResources, refResources.UpgradeCost[ResourceType.Mithril][++curLevel]))
-					{
-						// Increase the level
-						cities[playerId].lvlResourceRegen[ResourceType.Mithril]++;
-						// Send message success
-						privateReply += GetLangString(groupId, "ResourceUpgraded", resourceType, curLevel);
-					}
-					else
-					{
-						// Send message failure
-						privateReply += GetLangString(groupId, "ResourceUpgradeFailed", resourceType, curLevel);
-					}
-					break;
-			}
-			// Update the player's resource regen
-			cities[playerId].UpdateRegen();
-			CityStatus(cities[playerId]);
-			// Assign Task
+            CityChatHandler chat = cities[playerId].chat;
+
+            ResourceType resourceType = (ResourceType) Enum.Parse(typeof(ResourceType), _resourceType);
+            curLevel = cities[playerId].lvlResourceRegen[resourceType];
+            
+            // this variable is for containing the 'level' to be shown to the player, bcoz lvl 0 is not intuitive...
+            byte textLevel; 
+            textLevel = curLevel;
+            textLevel++;
+
+            if (curLevel + 1 < refResources.UpgradeCost[resourceType].Length)
+            {
+                //Console.WriteLine("newLevel : {0}\r\n", curLevel);
+                if (PayCost(ref cities[playerId]._resources, refResources.UpgradeCost[resourceType][++curLevel], playerId))
+                {
+                    // Increase the level & Update the new regen
+                    cities[playerId].lvlResourceRegen[resourceType]++;
+                    cities[playerId].UpdateRegen();
+
+                    // readjusting the textLevel
+                    textLevel = curLevel;
+                    textLevel++;
+
+                    chat.AddReply(GetLangString(groupId, "ResourceUpgraded", GetLangString(groupId, _resourceType), textLevel));
+                }
+                else
+                {
+                    // Send message failure
+                    chat.AddReply(GetLangString(groupId, "ResourceUpgradeFailed", _resourceType, textLevel));
+                }
+            } else
+            {
+                chat.AddReply(GetLangString(groupId, "LvlMaxAlready", _resourceType));
+            }
+            
+			CityStatus(playerId);
+			// Back to main menu
 			await MainMenu(playerId, messageId);
 		}
 
         public async Task Back(long playerId, int messageId)
         {
-            // intentionally doubled
-            menu = cities[playerId].menuHistory.Pop();
-            menu = cities[playerId].menuHistory.Pop();
+            CityChatHandler chat = cities[playerId].chat;
 
-            privateReply = cities[playerId].replyHistory.Pop();
-            privateReply = cities[playerId].replyHistory.Pop();
+            // intentionally doubled
+            chat.menu = chat.menuHistory.Pop();
+            chat.menu = chat.menuHistory.Pop();
+
+            chat.privateReply = chat.replyHistory.Pop();
+            chat.privateReply = chat.replyHistory.Pop();
             
-            await EditMessage(playerId, messageId, replyMarkup: menu);
+            await chat.EditMessage();
         }
 
         public async Task TimeUp()
         {
             // let's kill this 2 times
-            for (byte i = 0; i < 2; i++)
+            for (byte i = 0; i < 3; i++)
             {
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    privateReply += GetLangString(groupId, "TimeUp", turn - 1);
-                    await EditMessage(kvp.Key, kvp.Value.msgId);
+                    kvp.Value.chat.AddReply(GetLangString(groupId, "TimeUp", turn - 1) 
+                        + new string ('!', i));
+                    await kvp.Value.chat.EditMessage();
+                    
                 }
             }
             
@@ -568,22 +504,31 @@ namespace NemesesGame
             return Program.GetLangString(chatId, key, args);
         }
 
-        async Task BotReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        /// <summary>
+        /// Send message to group where game is running
+        /// </summary>
+        /// <param name="groupId"></param>
+        /// <returns></returns>
+        async Task BotReply(long groupId/*, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown*/)
 		{
             string replyString = botReply;
 
             botReply = "";
-			await Program.SendMessage(groupId, replyString, replyMarkup, _parseMode);
+			await Program.SendMessage(groupId, replyString/*, replyMarkup, _parseMode*/);
 			replyString = "";
 
+            /*// commented out because it doesn't seem replying to the group will use menu...
             if (buttons != null)
             {
                 buttons.Clear();
                 menu = null;
             }
+            */
         }
 
-        async Task PrivateReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
+        /*
+
+        async Task SendReply(long groupId, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
         {
             string replyString = privateReply;
 
@@ -597,6 +542,8 @@ namespace NemesesGame
                 menu = null;
             }
         }
+
+        
         /// <summary>
         /// This only uses 'privateReply' (assuming no Edit needed in groups...)
         /// </summary>
@@ -625,5 +572,6 @@ namespace NemesesGame
             thisString = string.Format("*{0}*", thisString);
             return thisString;
         }
+        */
     }
 }

@@ -80,7 +80,7 @@ namespace NemesesGame
                         {
 							try
 							{
-								if (!String.IsNullOrWhiteSpace(args[1]))
+								if (!string.IsNullOrWhiteSpace(args[1]))
                                 {
                                     string newCityName = "";
                                     var newArgs = Program.RemoveElement(args, 0);
@@ -89,6 +89,14 @@ namespace NemesesGame
                                     {
                                         newCityName += arg + " ";
                                     }
+
+                                    // limits the cityName length...
+                                    byte maxLength = 25;
+                                    if (newCityName.Length >= maxLength)
+                                    {
+                                        newCityName = newCityName.Substring(0, maxLength);
+                                    }
+
                                     await gameDict[thisChatId].ChooseName(senderId, newCityName);
                                     break;
                                 }
@@ -240,9 +248,9 @@ namespace NemesesGame
             long groupId = long.Parse(args[1]);
 
             
-            if (gameDict[groupId].cities[senderId].msgId != msgId)
+            if (gameDict[groupId].cities[senderId].chat.msgId != msgId)
             {
-                gameDict[groupId].cities[senderId].msgId = msgId;
+                gameDict[groupId].cities[senderId].chat.msgId = msgId;
             }
             
               

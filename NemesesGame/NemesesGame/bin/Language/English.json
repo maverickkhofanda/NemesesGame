@@ -17,7 +17,7 @@
 		"IteratePlayerCityName" : "*{0}* as *{1}*'s head of state\r\n",
 		"JoinedGame" : "*{0}* *{1}* has joined the game!\r\n",
 		"LeaveGame" : "*{0}* *{1}* has left the lobby!\r\n",
-		"NextTurn" : "\r\nTurn *{0}*\n\rNext turn in *{1}* secs",
+		"NextTurn" : "\r\nTurn *{0}*\n\rNext turn in *{1}* secs\r\n",
 		"ThisTurn" : " (turn *{0}*)",
 		"StartGameGroup" : "Game is starting...\r\n",
 		
@@ -46,7 +46,9 @@
 			],
 
 		"---REGION : Game Exception---" : "",
-		"ResourceUpgradeFailed" : "You don't have enough resources upgrade *{0}* to *level {1}*.\r\n",
+		"ResourceUpgradeFailed" : "You can't upgrade *{0}* to *level {1}*.\r\n\r\n",
+		"NotEnoughResources" : "You don't have enough resources!\r\n",
+		"LvlMaxAlready" : "Your *{0}* level is maxed already!\r\n",
 
 		"---REGION : Status---" : "",
 		"CurrentResources" : [ 
