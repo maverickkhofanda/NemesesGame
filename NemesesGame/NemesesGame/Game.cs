@@ -71,11 +71,11 @@ namespace NemesesGame
 
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    //CityChatHandler chat = kvp.Value.chat;
+                    CityChatHandler chat = kvp.Value.chat;
                     PlayerDetails pDetails = kvp.Value.playerDetails;
 
-                    kvp.Value.chat.AddReply(GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
-                    await kvp.Value.chat.SendReply();
+                    chat.AddReply(GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
+                    await chat.SendReply();
                     await BroadcastCityStatus();
                     botReply += GetLangString(groupId, "IteratePlayerCityName", pDetails.firstName, pDetails.cityName);
                 }
@@ -160,7 +160,6 @@ namespace NemesesGame
         {
             foreach (KeyValuePair<long, City> kvp in cities)
             {
-                
                 CityStatus(kvp.Key);
 
                 await kvp.Value.chat.SendReply();
@@ -509,12 +508,12 @@ namespace NemesesGame
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        async Task BotReply(long groupId/*, IReplyMarkup replyMarkup = null, ParseMode _parseMode = ParseMode.Markdown*/)
+        async Task BotReply(long groupId,/* IReplyMarkup replyMarkup = null, */ParseMode _parseMode = ParseMode.Markdown)
 		{
             string replyString = botReply;
 
             botReply = "";
-			await Program.SendMessage(groupId, replyString/*, replyMarkup, _parseMode*/);
+			await Program.SendMessage(groupId, replyString,/* replyMarkup,*/ _parseMode);
 			replyString = "";
 
             /*// commented out because it doesn't seem replying to the group will use menu...

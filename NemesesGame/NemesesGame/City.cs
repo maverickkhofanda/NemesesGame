@@ -55,18 +55,5 @@ namespace NemesesGame
 			resourceRegen.Stone = refResources.ResourceRegen[ResourceType.Stone][lvlResourceRegen[ResourceType.Stone]];
 			resourceRegen.Mithril = refResources.ResourceRegen[ResourceType.Mithril][lvlResourceRegen[ResourceType.Mithril]];
 		}
-
-        
-
-        string GetLangString(long chatId, string key, params object[] args)
-        {
-            return Program.GetLangString(chatId, key, args);
-        }
-
-        public void replyAdd(string addString)
-        {
-
-        }
-        
     }
 }
