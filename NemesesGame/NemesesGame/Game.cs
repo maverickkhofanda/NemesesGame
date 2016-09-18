@@ -124,46 +124,129 @@ namespace NemesesGame
             await cities[playerId].chat.SendReply();
         }
 
-        #region Behind the scenes
+        #region Game related functions
 
-        private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
+        public async Task ResourceUpgrade(long playerId, int messageId, string _resourceType)
         {
-            _timer = new Timer();
-            _timer.Elapsed += elapsedEventHandler;
-            _timer.Interval = timerInterval * 1000;
-            _timer.Enabled = true;
+            byte curLevel = 99;
+            CityChatHandler chat = cities[playerId].chat;
+
+            ResourceType resourceType = (ResourceType)Enum.Parse(typeof(ResourceType), _resourceType);
+            curLevel = cities[playerId].lvlResourceRegen[resourceType];
+
+            // this variable is for containing the 'level' to be shown to the player, bcoz lvl 0 is not intuitive...
+            byte textLevel;
+            textLevel = curLevel;
+            textLevel++;
+
+            if (curLevel + 1 < refResources.UpgradeCost[resourceType].Length)
+            {
+                //Console.WriteLine("newLevel : {0}\r\n", curLevel);
+                if (PayCost(ref cities[playerId]._resources, refResources.UpgradeCost[resourceType][++curLevel], playerId))
+                {
+                    // Increase the level & Update the new regen
+                    cities[playerId].lvlResourceRegen[resourceType]++;
+                    cities[playerId].UpdateRegen();
+
+                    // readjusting the textLevel
+                    textLevel = curLevel;
+                    textLevel++;
+
+                    chat.AddReply(GetLangString(groupId, "ResourceUpgraded", GetLangString(groupId, _resourceType), textLevel));
+                }
+                else
+                {
+                    // Send message failure
+                    chat.AddReply(GetLangString(groupId, "ResourceUpgradeFailed", _resourceType, textLevel));
+                }
+            }
+            else
+            {
+                chat.AddReply(GetLangString(groupId, "LvlMaxAlready", _resourceType));
+            }
+
+            CityStatus(playerId);
+            // Back to main menu
+            await MainMenu(playerId, messageId);
         }
 
-		private bool PayCost(ref Resources currentResource, Resources resourceCost, long playerId) // Pay resourceCost with currentResource
-		{
-            //Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
-            //Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
-            
-			// If currentResource is not enough
-			if (currentResource < resourceCost)
-			{
-                // Resource not enough
-                //Console.WriteLine("Not enough resources\r\n");
-                cities[playerId].chat.AddReply(GetLangString(groupId, "NotEnoughResources"));
-				return false;
-			}
-			else // currentResource is enough, deduct resourceCost from currentResource
-			{
-				currentResource = (currentResource - resourceCost);
-				//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
-				// Paid 'resourceCost'
-				return true;
-			}
-		}
-
-        async Task BroadcastCityStatus()
+        public async Task RaiseArmy(long playerId, int messageId, string _armyType = null, int _armyNumber = 0)
         {
-            foreach (KeyValuePair<long, City> kvp in cities)
-            {
-                CityStatus(kvp.Key);
+            //ask which armyType
+            CityChatHandler chat = cities[playerId].chat;
 
-                await kvp.Value.chat.SendReply();
+            // entering the RaiseArmy menu...
+            if (_armyType == null && _armyNumber == 0)
+            {
+                //ask which armyType
+                chat.AddReply(GetLangString(groupId, "AskRaiseArmyType"));
+
+                foreach(KeyValuePair<ArmyType, int> kvp in cities[playerId]._army.ArmyNumber)
+                {
+                    string armyType = Enum.GetName(typeof(ArmyType), kvp.Key);
+
+                    string buttonOutput = GetLangString(groupId, "ArmyPrice", 
+                        GetLangString(groupId, armyType),
+                        cities[playerId]._army.ArmyCost[kvp.Key]); // gets the price
+                    chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"RaiseArmy|{groupId}|{armyType}"));
+                }
+                chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+
+                chat.SetMenu();
+                chat.AddReplyHistory();
+                await chat.EditMessage();
             }
+            else if (_armyType != null)
+            {
+                //ask how much army do you want to raise, give the price in the chat
+                ArmyType armyType = (ArmyType) Enum.Parse(typeof(ArmyType), _armyType);
+                int armyCost = cities[playerId]._army.ArmyCost[armyType];
+
+                // ask the player to input army number
+                if (_armyNumber == 0)
+                {
+                    chat.AddReply(GetLangString(groupId, "AskRaiseArmyNumber",
+                    GetLangString(groupId, _armyType),
+                    armyCost));
+
+                    //lets give the player options : 100, 200, 300, 400, 500
+                    for (int i = 100; i <= 500; i += 100)
+                    {
+                        string buttonOutput = string.Format("{0} ({1}💰)", i, armyCost * i);
+                        chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"RaiseArmy|{groupId}|{_armyType}|{i}"));
+                    }
+                    chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+
+                    chat.SetMenu();
+                    chat.AddReplyHistory();
+                    await chat.EditMessage();
+                }
+                // we got the army number... now process it
+                else
+                {
+                    int goldCost = armyCost * _armyNumber;
+                    Resources payCost = new Resources(goldCost, 0, 0, 0);
+                    if (PayCost(ref cities[playerId]._resources, payCost, playerId))
+                    {
+                        cities[playerId]._army.ArmyNumber[armyType] += _armyNumber;
+                        chat.AddReply(GetLangString(groupId, "RaiseArmySuccess",
+                            _armyNumber,
+                            GetLangString(groupId, _armyType)));
+
+                        Console.WriteLine("{0} current number: {1}", armyType, cities[playerId]._army.ArmyNumber[armyType]);
+                    }
+
+                    CityStatus(playerId);
+                    // Back to main menu
+                    await MainMenu(playerId, messageId);
+                }
+
+                
+            }
+
+            
+
+            //ask how much
         }
 
         #endregion
@@ -218,8 +301,8 @@ namespace NemesesGame
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
             chat.SetMenu();
 
-            cities[playerId].chat.AddReplyHistory();
-            await cities[playerId].chat.EditMessage();
+            chat.AddReplyHistory();
+            await chat.EditMessage();
         }
 
         public async Task MyStatus(long playerId, int messageId)
@@ -327,49 +410,6 @@ namespace NemesesGame
             await chat.EditMessage();
         }
 
-		public async Task ResourceUpgrade(long playerId, int messageId, string _resourceType)
-		{
-			byte curLevel = 99;
-            CityChatHandler chat = cities[playerId].chat;
-
-            ResourceType resourceType = (ResourceType) Enum.Parse(typeof(ResourceType), _resourceType);
-            curLevel = cities[playerId].lvlResourceRegen[resourceType];
-            
-            // this variable is for containing the 'level' to be shown to the player, bcoz lvl 0 is not intuitive...
-            byte textLevel; 
-            textLevel = curLevel;
-            textLevel++;
-
-            if (curLevel + 1 < refResources.UpgradeCost[resourceType].Length)
-            {
-                //Console.WriteLine("newLevel : {0}\r\n", curLevel);
-                if (PayCost(ref cities[playerId]._resources, refResources.UpgradeCost[resourceType][++curLevel], playerId))
-                {
-                    // Increase the level & Update the new regen
-                    cities[playerId].lvlResourceRegen[resourceType]++;
-                    cities[playerId].UpdateRegen();
-
-                    // readjusting the textLevel
-                    textLevel = curLevel;
-                    textLevel++;
-
-                    chat.AddReply(GetLangString(groupId, "ResourceUpgraded", GetLangString(groupId, _resourceType), textLevel));
-                }
-                else
-                {
-                    // Send message failure
-                    chat.AddReply(GetLangString(groupId, "ResourceUpgradeFailed", _resourceType, textLevel));
-                }
-            } else
-            {
-                chat.AddReply(GetLangString(groupId, "LvlMaxAlready", _resourceType));
-            }
-            
-			CityStatus(playerId);
-			// Back to main menu
-			await MainMenu(playerId, messageId);
-		}
-
         public async Task Back(long playerId, int messageId)
         {
             CityChatHandler chat = cities[playerId].chat;
@@ -397,7 +437,6 @@ namespace NemesesGame
                     
                 }
             }
-            
         }
 
         #endregion
@@ -498,6 +537,51 @@ namespace NemesesGame
 
         #endregion
 
+        #region Behind the scenes
+
+        private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
+        {
+            _timer = new Timer();
+            _timer.Elapsed += elapsedEventHandler;
+            _timer.Interval = timerInterval * 1000;
+            _timer.Enabled = true;
+        }
+
+		private bool PayCost(ref Resources currentResource, Resources resourceCost, long playerId) // Pay resourceCost with currentResource
+		{
+            //Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+            //Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
+            
+			// If currentResource is not enough
+			if (currentResource < resourceCost)
+			{
+                // Resource not enough
+                //Console.WriteLine("Not enough resources\r\n");
+                cities[playerId].chat.AddReply(GetLangString(groupId, "NotEnoughResources"));
+				return false;
+			}
+			else // currentResource is enough, deduct resourceCost from currentResource
+			{
+				currentResource = (currentResource - resourceCost);
+				//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+				// Paid 'resourceCost'
+				return true;
+			}
+		}
+
+        async Task BroadcastCityStatus()
+        {
+            foreach (KeyValuePair<long, City> kvp in cities)
+            {
+                CityStatus(kvp.Key);
+
+                await kvp.Value.chat.SendReply();
+            }
+        }
+
+        #endregion
+
+
         public string GetLangString(long chatId, string key, params object[] args)
         {
             return Program.GetLangString(chatId, key, args);
@@ -513,7 +597,7 @@ namespace NemesesGame
             string replyString = botReply;
 
             botReply = "";
-			await Program.SendMessage(groupId, replyString,/* replyMarkup,*/ _parseMode);
+			await Program.SendMessage(groupId, replyString,/* replyMarkup,*/ _parseMode: _parseMode);
 			replyString = "";
 
             /*// commented out because it doesn't seem replying to the group will use menu...

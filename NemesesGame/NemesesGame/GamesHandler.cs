@@ -265,6 +265,24 @@ namespace NemesesGame
 					await gameDict[groupId].ResourceUpgrade(senderId, msgId, args[2]);
                     break;
 
+                case "RaiseArmy":
+                    // check if args has the additional parameter...
+                    switch(args.Length)
+                    {
+                        case 2:
+                            await gameDict[groupId].RaiseArmy(senderId, msgId);
+                            break;
+                        case 3:
+                            await gameDict[groupId].RaiseArmy(senderId, msgId, args[2]);
+                            break;
+                        case 4:
+                            int armyNumber = int.Parse(args[3]);
+                            Console.WriteLine("armyNumber: " + armyNumber);
+                            await gameDict[groupId].RaiseArmy(senderId, msgId, args[2], armyNumber);
+                            break;
+                    }
+                    break;
+
                 #endregion
 
                 #region menu callbacks

@@ -13,14 +13,21 @@ namespace NemesesGame
     {
         public Army ()
         {
-            //init army_ dict
-            army_.Add(ArmyType.Regulars, 0);
+            //init armyNumber dict
+            armyNumber.Add(ArmyType.Regulars, 0);
+
+            //init armyCost
+            armyCost.Add(ArmyType.Regulars, regularsCost);
         }
-        
-        Dictionary<ArmyType, int> army_ = new Dictionary<ArmyType, int>();
 
-        public int Regulars { get { return army_[ArmyType.Regulars]; } set { army_[ArmyType.Regulars] = value; } }
+        int regularsCost = 3;
 
-        public Dictionary<ArmyType, int> Army_ { get { return army_; } set { army_ = value; } }
+        Dictionary<ArmyType, int> armyNumber = new Dictionary<ArmyType, int>();
+        Dictionary<ArmyType, int> armyCost = new Dictionary<ArmyType, int>(); // for now, we will only use gold
+
+        public int Regulars { get { return armyNumber[ArmyType.Regulars]; } set { armyNumber[ArmyType.Regulars] = value; } }
+
+        public Dictionary<ArmyType, int> ArmyNumber { get { return armyNumber; } set { armyNumber = value; } }
+        public Dictionary<ArmyType, int> ArmyCost { get { return armyCost; } set { armyCost = value; } }
     }
 }
