@@ -40,9 +40,9 @@
 
 		"---REGION : In-game Headers---" : "",
 		"PlayerListHeader" : "Players in game:\r\n",
-		"ResourceUpgradePriceCost" : "{0}: {1}\n\r(Cost: {2})",
+		"ResourceUpgradePriceCost" : "{0}: {1}\n\r(Cost: {2})\r\n",
 		"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
-		"UpgradeProductionHeader" : "Which resource production you want to upgrade?",
+		"UpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
 		"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
 		"AskRaiseArmyNumber" : "How many men do you want to muster to *{0}*? (Cost: *{1}*💰 / man)",
 		"RaiseArmySuccess" : "You've just raised *{0}* *{1}*!\r\n",

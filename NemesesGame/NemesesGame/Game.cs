@@ -364,7 +364,7 @@ namespace NemesesGame
 
                     if (currentLvl == i)
                     {
-                        regen = "[" + regen + "]";
+                        regen = "(" + regen + ")";
                     }
                     resourceLevels += regen;
 
@@ -379,9 +379,10 @@ namespace NemesesGame
                 else
                 { upgradeCost = "Max Lvl"; }
 
-                //Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
-
-                buttonString = GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, resourceLevels, upgradeCost);
+				//Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
+				Console.WriteLine("{0}\n", resourceLevels);
+                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, resourceLevels, upgradeCost));
+				buttonString = thisResourceString;
 
                 //output
                 if (index == 0)
