@@ -276,10 +276,11 @@ namespace NemesesGame
                         string typeName = Enum.GetName(typeof(ArmyType), _type.Key);
                         chat.AddReply(string.Format("*{0}* *{1}*\r\n", _type.Value, GetLangString(groupId, typeName)));
                     }
-                    Console.WriteLine(chat.privateReply);
+                    //Console.WriteLine(chat.privateReply);
                     // ask how many percentage of your current defending army do you want to unleash
                     for (int i = 10; i < 100; i+= 10)
                     {
+                        // need to format this to 2-columns
                         string buttonOutput = string.Format("{0}%", i);
                         chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"Attack|{groupId}|{atkTargetId}|{i}"));
                     }
