@@ -25,14 +25,16 @@ namespace NemesesGame
 
         // City Army >> Fronts >> armyType & number
 
-        Dictionary<ArmyState, > fronts
+        Dictionary<ArmyState, Dictionary<ArmyType, int>> fronts = new Dictionary<ArmyState, Dictionary<ArmyType, int>>();
         Dictionary<ArmyType, int> typeNumber = new Dictionary<ArmyType, int>();
 
         Dictionary<ArmyType, int> cost = new Dictionary<ArmyType, int>(); // for now, we will only use gold
 
         //public int Regulars { get { return typeNumber[ArmyType.Regulars]; } set { typeNumber[ArmyType.Regulars] = value; } }
 
+        public Dictionary<ArmyState, Dictionary<ArmyType, int>> Fronts { get { return fronts; } set { fronts = value; } }
         public Dictionary<ArmyType, int> TypeNumber { get { return typeNumber; } set { typeNumber = value; } }
+
         public Dictionary<ArmyType, int> Cost { get { return cost; } set { cost = value; } }
     }
 }

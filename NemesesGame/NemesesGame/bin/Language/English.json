@@ -47,7 +47,7 @@
 		"AskRaiseArmyNumber" : "How many men do you want to muster to *{0}*? (Cost: *{1}*💰 / man)",
 		"RaiseArmySuccess" : "You've just raised *{0}* *{1}*!\r\n",
 		"ChooseOtherPlayer" : "Which state do you choose?",
-		"DeployTroopNumber" : "How many troops do you want to unleash? (% of _current defending_ troops)\r\n",
+		"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
 		"MainMenu" : [
 			"What wilt thou do milord?",
 			"Please assign your servants jobs to do"
@@ -70,6 +70,7 @@
 		"UpgradeProduction" : "Upgrade Production",
 		"CityStatus" : "Your Status",
 		"RaiseArmy" : "Raise Army",
+		"Attack" : "Attack",
 		"ArmyPrice" : "{0}: 💰{1} each",
 		}	
 }

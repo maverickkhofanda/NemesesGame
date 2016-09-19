@@ -205,7 +205,7 @@ namespace NemesesGame
                 // ask the player to input army number
                 if (_armyNumber == 0)
                 {
-                    chat.AddReply(GetLangString(groupId, "AskRaise_Number",
+                    chat.AddReply(GetLangString(groupId, "AskRaiseArmyNumber",
                     GetLangString(groupId, _armyType),
                     armyCost));
 
@@ -254,6 +254,7 @@ namespace NemesesGame
 
                 foreach(KeyValuePair<long, City> kvp in cities)
                 {
+                    // don't switch out the sender yet... for testing purposes
                     PlayerDetails pDetails = kvp.Value.playerDetails;
                     string buttonOutput = string.Format("{0} ({1})", pDetails.cityName, pDetails.firstName);
                     chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"Attack|{groupId}|{pDetails.telegramId}"));
@@ -273,10 +274,11 @@ namespace NemesesGame
                     foreach (KeyValuePair<ArmyType, int> _type in cities[playerId]._army.TypeNumber)
                     {
                         string typeName = Enum.GetName(typeof(ArmyType), _type.Key);
-                        chat.AddReply(string.Format("*{0}* *{1}*", _type.Value, GetLangString(groupId, typeName)));
+                        chat.AddReply(string.Format("*{0}* *{1}*\r\n", _type.Value, GetLangString(groupId, typeName)));
                     }
+                    Console.WriteLine(chat.privateReply);
                     // ask how many percentage of your current defending army do you want to unleash
-                    for (int i = 10; i < 100; i++)
+                    for (int i = 10; i < 100; i+= 10)
                     {
                         string buttonOutput = string.Format("{0}%", i);
                         chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"Attack|{groupId}|{atkTargetId}|{i}"));
@@ -330,7 +332,7 @@ namespace NemesesGame
 
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
-            chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Attack", $"Attack|{groupId}")));
+            chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Attack"), $"Attack|{groupId}"));
             // no Back button
             chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
 
