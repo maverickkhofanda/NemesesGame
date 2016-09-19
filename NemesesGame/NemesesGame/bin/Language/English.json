@@ -12,7 +12,7 @@
 		"mithril" : "mithril",
 		"Mithril" : "Mithril💎",
 
-		"Regulars" : "Regulars",
+		"Regulars" : "Regulars🗡",
 		"regulars" : "regulars",
 
 		"---REGION : Lobby (Group)---" : "",
@@ -46,6 +46,8 @@
 		"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
 		"AskRaiseArmyNumber" : "How many men do you want to muster to *{0}*? (Cost: *{1}*💰 / man)",
 		"RaiseArmySuccess" : "You've just raised *{0}* *{1}*!\r\n",
+		"ChooseOtherPlayer" : "Which state do you choose?",
+		"DeployTroopNumber" : "How many troops do you want to unleash? (% of _current defending_ troops)\r\n",
 		"MainMenu" : [
 			"What wilt thou do milord?",
 			"Please assign your servants jobs to do"

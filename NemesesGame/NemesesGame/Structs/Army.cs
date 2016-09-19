@@ -8,26 +8,31 @@ using NemesesGame;
 namespace NemesesGame
 {
     public enum ArmyType { Regulars }
+    public enum ArmyState { Defense , March, Attack, Return }
     
     public class Army
     {
         public Army ()
         {
-            //init armyNumber dict
-            armyNumber.Add(ArmyType.Regulars, 0);
+            //init typeNumber dict
+            typeNumber.Add(ArmyType.Regulars, 1000);
 
-            //init armyCost
-            armyCost.Add(ArmyType.Regulars, regularsCost);
+            //init cost
+            cost.Add(ArmyType.Regulars, regularsCost);
         }
 
         int regularsCost = 3;
 
-        Dictionary<ArmyType, int> armyNumber = new Dictionary<ArmyType, int>();
-        Dictionary<ArmyType, int> armyCost = new Dictionary<ArmyType, int>(); // for now, we will only use gold
+        // City Army >> Fronts >> armyType & number
 
-        public int Regulars { get { return armyNumber[ArmyType.Regulars]; } set { armyNumber[ArmyType.Regulars] = value; } }
+        Dictionary<ArmyState, > fronts
+        Dictionary<ArmyType, int> typeNumber = new Dictionary<ArmyType, int>();
 
-        public Dictionary<ArmyType, int> ArmyNumber { get { return armyNumber; } set { armyNumber = value; } }
-        public Dictionary<ArmyType, int> ArmyCost { get { return armyCost; } set { armyCost = value; } }
+        Dictionary<ArmyType, int> cost = new Dictionary<ArmyType, int>(); // for now, we will only use gold
+
+        //public int Regulars { get { return typeNumber[ArmyType.Regulars]; } set { typeNumber[ArmyType.Regulars] = value; } }
+
+        public Dictionary<ArmyType, int> TypeNumber { get { return typeNumber; } set { typeNumber = value; } }
+        public Dictionary<ArmyType, int> Cost { get { return cost; } set { cost = value; } }
     }
 }
