@@ -442,7 +442,7 @@ namespace NemesesGame
 
 				//Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
 				
-                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, currentLvl ,upgradeCost));
+                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, currentLvl+1 ,upgradeCost));
 				buttonString = thisResourceString + " : " + resourceLevels;
 
                 //output
