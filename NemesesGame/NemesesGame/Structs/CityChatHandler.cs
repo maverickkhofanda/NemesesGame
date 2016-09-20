@@ -20,6 +20,7 @@ namespace NemesesGame
         
         public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
         public Stack<string> replyHistory = new Stack<string>(10);
+        public int backCount = 0;
 
         public CityChatHandler(long _playerId)
         {
@@ -48,6 +49,8 @@ namespace NemesesGame
         {
             menuHistory.Push(menu);
             replyHistory.Push(privateReply);
+
+            backCount = menuHistory.Count;
         }
 
         public void ClearReplyHistory()

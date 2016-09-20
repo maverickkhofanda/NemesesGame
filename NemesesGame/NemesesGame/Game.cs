@@ -369,7 +369,8 @@ namespace NemesesGame
         {
             CityStatus(playerId);
 
-            await cities[playerId].chat.SendReply();
+            SetMainMenu(playerId);
+            await cities[playerId].chat.EditMessage();
         }
 
         public async Task UpgradeProduction(long playerId, int messageId)
@@ -382,6 +383,7 @@ namespace NemesesGame
             string woodString = "";
             string stoneString = "";
             string mithrilString = "";
+            byte currentLvl;
 
             // Generate woodString, stoneString, mithrilString
             for (byte index = 0; index < 3; index++)
@@ -410,11 +412,10 @@ namespace NemesesGame
                 }
 
                 byte totalLvls = (byte)refResources.ResourceRegen[thisResourceType].Length;
-                byte currentLvl = cities[playerId].lvlResourceRegen[thisResourceType];
+                currentLvl = cities[playerId].lvlResourceRegen[thisResourceType];
 
                 if (currentLvl < totalLvls - 1)
                 { cost = refResources.UpgradeCost[thisResourceType][currentLvl + 1]; }
-                else { }
 
                 for (byte i = 0; i < totalLvls; i++)
                 {
@@ -435,13 +436,13 @@ namespace NemesesGame
                 }
 
                 if (cost != new Resources(0,0,0,0))
-                { upgradeCost = string.Format("{0}💰 {1}🌲 {2}🗿 {3}💎", cost.Gold, cost.Wood, cost.Stone, cost.Mithril); }
+                { upgradeCost = string.Format("*{0}*💰 *{1}*🌲 *{2}*🗿 *{3}*💎", cost.Gold, cost.Wood, cost.Stone, cost.Mithril); }
                 else
                 { upgradeCost = "Max Lvl"; }
 
 				//Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
 				
-                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, upgradeCost));
+                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, currentLvl ,upgradeCost));
 				buttonString = thisResourceString + " : " + resourceLevels;
 
                 //output
@@ -475,12 +476,19 @@ namespace NemesesGame
         {
             CityChatHandler chat = cities[playerId].chat;
 
-            // intentionally doubled
-            chat.menu = chat.menuHistory.Pop();
-            chat.menu = chat.menuHistory.Pop();
+            if (chat.menuHistory.Count == chat.backCount)
+            {
+                chat.menu = chat.menuHistory.Pop();
+                chat.menu = chat.menuHistory.Pop();
 
-            chat.privateReply = chat.replyHistory.Pop();
-            chat.privateReply = chat.replyHistory.Pop();
+                chat.privateReply = chat.replyHistory.Pop();
+                chat.privateReply = chat.replyHistory.Pop();
+            }
+            else
+            {
+                chat.menu = chat.menuHistory.Pop();
+                chat.privateReply = chat.replyHistory.Pop();
+            }
             
             await chat.EditMessage();
         }

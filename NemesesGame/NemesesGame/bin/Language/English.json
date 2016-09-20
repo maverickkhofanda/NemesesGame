@@ -41,7 +41,7 @@
 
 		"---REGION : In-game Headers---" : "",
 		"PlayerListHeader" : "Players in game:\r\n",
-		"ResourceUpgradePriceCost" : "{0}: Cost : ({1})\r\n",
+		"ResourceUpgradePriceCost" : "*{0}*(*Level {1}*) Cost : {2}\r\n",
 		"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
 		"UpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
 		"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
@@ -50,8 +50,8 @@
 		"ChooseOtherPlayer" : "Which state do you choose?",
 		"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
 		"MainMenu" : [
-			"What wilt thou do milord?",
-			"Please assign your servants jobs to do"
+			"\r\nWhat wilt thou do milord?",
+			"\r\nPlease assign your servants jobs to do"
 			],
 
 		"---REGION : Game Exception---" : "",
