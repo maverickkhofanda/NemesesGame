@@ -23,6 +23,7 @@
 		"NextTurn" : "\r\nTurn *{0}*\n\rNext turn in *{1}* secs\r\n",
 		"ThisTurn" : " (turn *{0}*)",
 		"StartGameGroup" : "Game is starting...\r\n",
+		"StartedGameGroup" : "There is a game started in this group already...\r\n",
 		
 		"---REGION : Lobby (Private)---" : "",
 		"NameChosen" : "Your city name: *{0}*",

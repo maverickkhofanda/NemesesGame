@@ -47,14 +47,22 @@ namespace NemesesGame
 
         public async Task StartGame()
         {
-            botReply += GetLangString(groupId, "StartGameGroup");
-            await PlayerList();
+			if (gameStatus == GameStatus.Hosted)
+			{
+				botReply += GetLangString(groupId, "StartGameGroup");
+				await PlayerList();
 
-            botReply += GetLangString(groupId, "AskChooseName", turnInterval);
-			gameStatus = GameStatus.Starting;
-            await BotReply(groupId);
+				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
+				gameStatus = GameStatus.Starting;
+				await BotReply(groupId);
 
-            Timer(turnInterval, Turn);
+				Timer(turnInterval, Turn);
+			}
+            else
+			{
+				botReply += GetLangString(groupId, "StartedGameGroup");
+				await BotReply(groupId);
+			}
 		}
 
 		/// <summary>
