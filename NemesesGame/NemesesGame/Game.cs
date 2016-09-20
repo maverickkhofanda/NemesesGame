@@ -380,9 +380,9 @@ namespace NemesesGame
                 { upgradeCost = "Max Lvl"; }
 
 				//Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
-				Console.WriteLine("{0}\n", resourceLevels);
-                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, resourceLevels, upgradeCost));
-				buttonString = thisResourceString;
+				
+                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, upgradeCost));
+				buttonString = thisResourceString + " : " + resourceLevels;
 
                 //output
                 if (index == 0)
