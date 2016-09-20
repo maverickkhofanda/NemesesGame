@@ -282,11 +282,30 @@ namespace NemesesGame
                             break;
                     }
                     break;
+                case "Attack":
+                    long atkPlayerId;
 
+                    // check if args has the additional parameter...
+                    switch (args.Length)
+                    {   
+                        case 2:
+                            await gameDict[groupId].Attack(senderId, msgId);
+                            break;
+                        case 3:
+                            atkPlayerId = long.Parse(args[2]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId);
+                            break;
+                        case 4:
+                            atkPlayerId = long.Parse(args[2]);
+                            int deployPercent = int.Parse(args[3]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, deployPercent);
+                            break;
+                    }
+                    break;
                 #endregion
 
-                #region menu callbacks
-                case "AssignTask":
+                    #region menu callbacks
+                    case "AssignTask":
                     await gameDict[groupId].AssignTask(senderId, msgId);
                     break;
 
