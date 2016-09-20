@@ -104,6 +104,7 @@ namespace NemesesGame
 
         void CityStatus (long playerId)
         {
+            // not splitted to ResourceStatus and ArmyStatus yet
             City city = cities[playerId];
 
             city.chat.AddReply(GetLangString(groupId, "CurrentResources",
@@ -113,6 +114,43 @@ namespace NemesesGame
                     city._resources.Stone, city.resourceRegen.Stone,
                     city._resources.Mithril, city.resourceRegen.Mithril));
             city.chat.AddReply(GetLangString(groupId, "NextTurn", turn, turnInterval));
+        }
+
+        void ArmyStatus (long playerId)
+        {
+            Army army = cities[playerId]._army;
+            CityChatHandler chat = cities[playerId].chat;
+
+            chat.AddReply(GetLangString(groupId, "CurrentArmyHeader"));
+
+            for (int i = 0; i < army.Fronts.Length; i++)
+            {
+                if (army.Fronts[i].Number != 0)
+                {
+                    int frontId = i + 1;
+
+                    // in Base reply requires different parameters
+                    // therefore, check if in Base
+                    if (army.Fronts[i].State == ArmyState.Base)
+                    {
+                        string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
+
+                        chat.AddReply(GetLangString(groupId, "CurrentArmy",
+                            frontId,
+                            GetLangString(groupId, armyState),
+                            army.Fronts[i].Number));
+                    }
+                    else // not in Base, requires more parameter (check the .json file for reference)
+                    {
+                        string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
+
+                        chat.AddReply(GetLangString(groupId, "CurrentArmy",
+                            frontId,
+                            GetLangString(groupId, armyState, army.Fronts[i].Target),
+                            army.Fronts[i].Number));
+                    }
+                }
+            }
         }
 
         void ResourceRegen ()
@@ -178,11 +216,54 @@ namespace NemesesGame
             await MainMenu(playerId, messageId);
         }
 
-        public async Task RaiseArmy(long playerId, int messageId, string _armyType = null, int _armyNumber = 0)
+        public async Task RaiseArmy(long playerId, int messageId/*, string _armyType = null*/, int _armyNumber = 0)
         {
             //ask which armyType
             CityChatHandler chat = cities[playerId].chat;
+            Army army = cities[playerId]._army;
 
+            if (_armyNumber == 0)
+            {
+                // ask how many army to raise
+                chat.AddReply(GetLangString(groupId, "AskRaiseArmyNumber", army.Cost));
+
+                //lets give the player options : 100, 200, 300, 400, 500
+                for (int i = 100; i <= 500; i += 100)
+                {
+                    string buttonOutput = string.Format("{0} ({1}💰)", i, army.Cost * i);
+                    chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"RaiseArmy|{groupId}|{i}"));
+                }
+                chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+
+                chat.SetMenu();
+                chat.AddReplyHistory();
+                await chat.EditMessage();
+            }
+            else
+            {
+                // now we got the armyNumber
+                // check the price, raise the army, then return to menu
+                
+                int goldCost = army.Cost * _armyNumber;
+                Resources payCost = new Resources(goldCost, 0, 0, 0);
+                Console.WriteLine("goldCost: " + goldCost);
+
+                if (PayCost(ref cities[playerId]._resources, payCost, playerId))
+                {
+                    army.Fronts[0].Number += _armyNumber;
+
+                    chat.AddReply(GetLangString(groupId, "RaiseArmySuccess", _armyNumber));
+                    Console.WriteLine("Raise Army Success: " + chat.privateReply);
+                }
+
+                CityStatus(playerId);
+                ArmyStatus(playerId);
+                // Back to main menu
+                await MainMenu(playerId, messageId);
+
+            }
+
+            /* revamp Army... this code is not used
             // entering the RaiseArmy menu...
             if (_armyType == null && _armyNumber == 0)
             {
@@ -204,7 +285,7 @@ namespace NemesesGame
                 chat.AddReplyHistory();
                 await chat.EditMessage();
             }
-            else if (_armyType != null)
+            else
             {
                 //ask how much army do you want to raise, give the price in the chat
                 ArmyType armyType = (ArmyType) Enum.Parse(typeof(ArmyType), _armyType);
@@ -249,6 +330,8 @@ namespace NemesesGame
                     await MainMenu(playerId, messageId);
                 }
             }
+            */
+
         }
 
         public async Task Attack(long playerId, int messageId, long atkTargetId = 0, int deployPercent = 0)
@@ -275,16 +358,23 @@ namespace NemesesGame
             }
             else
             {
+                Army army = cities[playerId]._army;
+
                 if (deployPercent == 0)
                 {
                     // show how many troops you have
                     chat.AddReply(GetLangString(groupId, "DeployTroopNumber"));
+                    chat.AddReply(GetLangString(groupId, "CurrentDefendingArmy", army.Fronts[0].Number));
+
+                    /* revamp army...
                     foreach (KeyValuePair<ArmyType, int> _type in cities[playerId]._army.TypeNumber)
                     {
                         string typeName = Enum.GetName(typeof(ArmyType), _type.Key);
                         chat.AddReply(string.Format("*{0}* *{1}*\r\n", _type.Value, GetLangString(groupId, typeName)));
                     }
                     //Console.WriteLine(chat.privateReply);
+                    */
+
                     // ask how many percentage of your current defending army do you want to unleash
                     for (int i = 10; i < 100; i+= 10)
                     {
@@ -293,7 +383,7 @@ namespace NemesesGame
                         chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"Attack|{groupId}|{atkTargetId}|{i}"));
                     }
                     chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
-                    chat.SetMenu();
+                    chat.SetTwoColMenu();
 
                     chat.AddReplyHistory();
                     await chat.EditMessage();
@@ -354,6 +444,7 @@ namespace NemesesGame
         {
             CityChatHandler chat = cities[playerId].chat;
 
+            CityStatus(playerId);
             chat.AddReply(GetLangString(groupId, "AssignTask"));
 
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));

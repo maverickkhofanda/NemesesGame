@@ -40,6 +40,23 @@ namespace NemesesGame
             //Console.WriteLine()
         }
 
+        public void SetTwoColMenu()
+        {
+            var twoMenu = new List<InlineKeyboardButton[]>();
+            for (var i = 0; i < buttons.Count; i++)
+            {
+                if (buttons.Count - 1 == i)
+                {
+                    twoMenu.Add(new[] { buttons[i] });
+                }
+                else
+                    twoMenu.Add(new[] { buttons[i], buttons[i + 1] });
+                i++;
+            }
+
+            menu = new InlineKeyboardMarkup(twoMenu.ToArray());
+        }
+
         /// <summary>
         /// Saves reply history for 'Back' button
         /// </summary>

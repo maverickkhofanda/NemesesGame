@@ -273,13 +273,16 @@ namespace NemesesGame
                             await gameDict[groupId].RaiseArmy(senderId, msgId);
                             break;
                         case 3:
-                            await gameDict[groupId].RaiseArmy(senderId, msgId, args[2]);
+                            int armyNumber = int.Parse(args[2]);
+                            await gameDict[groupId].RaiseArmy(senderId, msgId, armyNumber);
                             break;
+                        /* revamp Army...
                         case 4:
                             int armyNumber = int.Parse(args[3]);
                             Console.WriteLine("armyNumber: " + armyNumber);
                             await gameDict[groupId].RaiseArmy(senderId, msgId, args[2], armyNumber);
                             break;
+                        */
                     }
                     break;
                 case "Attack":

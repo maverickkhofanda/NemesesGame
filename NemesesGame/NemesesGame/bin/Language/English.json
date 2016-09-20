@@ -15,6 +15,11 @@
 		"Regulars" : "Regulars🗡",
 		"regulars" : "regulars",
 
+		"Base" : "in Base",
+		"March" : "marching to {0}",
+		"Invade" : "invading {0}",
+		"Intercept" : "encountering {0} on the way",
+
 		"---REGION : Lobby (Group)---" : "",
 		"AskChooseName" : "\r\nYou can choose your name for *{0}* seconds by using /choosename (your city name).",
 		"IteratePlayerCityName" : "*{0}* as *{1}*'s head of state\r\n",
@@ -45,13 +50,13 @@
 		"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
 		"UpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
 		"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
-		"AskRaiseArmyNumber" : "How many men do you want to muster to *{0}*? (Cost: *{1}*💰 / man)",
-		"RaiseArmySuccess" : "You've just raised *{0}* *{1}*!\r\n",
+		"AskRaiseArmyNumber" : "How many men do you want to muster? (Cost: *{0}*💰 / man)",
+		"RaiseArmySuccess" : "You've just raised *{0}* troops!\r\n",
 		"ChooseOtherPlayer" : "Which state do you choose?",
 		"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
 		"MainMenu" : [
-			"\r\nWhat wilt thou do milord?",
-			"\r\nPlease assign your servants jobs to do"
+			"\r\n\r\nWhat wilt thou do milord?",
+			"\r\n\r\nPlease assign your servants jobs to do"
 			],
 
 		"---REGION : Game Exception---" : "",
@@ -63,10 +68,13 @@
 		"CurrentResources" : [ 
 			"\r\n*{0}*'s current resources:\n\rGold💰: *{1}* + {2}/turn\n\rWood🌲: *{3}* + {4}/turn\n\rStone🗿: *{5}* + {6}/turn\n\rMithril💎: *{7}* + {8}/turn\n\r"
 			],
+		"CurrentArmyHeader" : "\r\nArmy current status:",
+		"CurrentArmy" : "\r\nFront *{0}* *{1}*: *{2}* troops🗡",
+		"CurrentDefendingArmy" : "\r\nArmy in base: *{0}* troops🗡",
 		"TimeUp" : "Time's up for turn {0}",
 
 		"---REGION : Buttons---" : "",
-		"Back" : "Back",
+		"Back" : "Back↩",
 		"AssignTask" : "Assign Task",
 		"UpgradeProduction" : "Upgrade Production",
 		"CityStatus" : "Your Status",
