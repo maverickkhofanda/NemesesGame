@@ -35,7 +35,25 @@ namespace NemesesGame
 
         int cost = 3;
         //float costX = 1.0f; // cost multiplier don't use this yet...
-        
+
+        byte invadeMarchLength = 2;
+
+        public void StartMarch(byte thisFrontId, long targetId, byte frontId)
+        {
+            Fronts[thisFrontId].TargetTelegramId = targetId;
+            Fronts[thisFrontId].TargetFrontId = frontId;
+            Fronts[thisFrontId].State = ArmyState.March;
+            Fronts[thisFrontId].MarchLeft = invadeMarchLength; // for now, it's only for invading
+
+            //Console.WriteLine("targetId= " + targetId);
+            //Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
+            Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
+            Console.WriteLine("TargetFrontId = " + Fronts[thisFrontId].TargetFrontId);
+            Console.WriteLine("armyState = " + Fronts[thisFrontId].State);
+            
+
+        }
+
         public ArmyFront[] Fronts { get { return fronts; } set { fronts = value; } }
         //public List<ArmyFront> Fronts { get { return fronts; } set { fronts = value; } }
         public float Power { get { return power; } set { power = value; } }

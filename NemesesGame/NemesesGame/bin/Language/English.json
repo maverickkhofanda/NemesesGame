@@ -35,8 +35,8 @@
 		"StartGamePrivate": "You are the President of *{0}* state.\n\r",
 
 		"---REGION : Lobby Exception---" : "",
-		"AlreadyJoinedGame" : "*{0}* ALREADY joined the game!\n\rStahp confusing the bot :(\r\n",
 		"GameNotFound": "No game has been hosted in this group.\r\nUse /joingame to make one!\r\n",
+		"AlreadyJoinedGame" : "*{0}* ALREADY joined the game!\n\rStahp confusing the bot :(\r\n",
 		"NotJoinedGame" : "YOU HAVEN'T JOINED ANY GAME!\n\rStahp confusing the bot :(\r\n",
 		"NotDev" : "You are not the developper!",
 		"CommandNotFound" : "waht r u talking about? Use commands I understand!(emoji)",
@@ -46,30 +46,37 @@
 
 		"---REGION : In-game Headers---" : "",
 		"PlayerListHeader" : "Players in game:\r\n",
-		"ResourceUpgradePriceCost" : "*{0}*(*Level {1}*) Cost : {2}\r\n",
-		"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
-		"UpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
-		"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
-		"AskRaiseArmyNumber" : "How many men do you want to muster? (Cost: *{0}*💰 / man)",
-		"RaiseArmySuccess" : "You've just raised *{0}* troops!\r\n",
 		"ChooseOtherPlayer" : "Which state do you choose?",
-		"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
 		"MainMenu" : [
 			"\r\n\r\nWhat wilt thou do milord?",
 			"\r\n\r\nPlease assign your servants jobs to do"
 			],
 
+		"---Sub-REGION : In-game Headers: Resources ---" : "",
+			"ResourceUpgradePriceCost" : "*{0}*(*Level {1}*) Cost : {2}\r\n",
+			"ResourceUpgraded" : "Your *{0}* production has been upgraded to *level {1}*\r\n",
+			"UpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
+
+		"---Sub-REGION : In-game Headers: Army ---" : "",
+			"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
+			"AskRaiseArmyNumber" : "How many men do you want to muster? (Cost: *{0}*💰 / man)",
+			"RaiseArmySuccess" : "You've just raised *{0}* troops!\r\n",
+			"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
+			"ArmyMarchEnemyBase" : "Your army is marching to {0} with {1} troops\r\n",
+			"ArmyMarchEnemyFront" : "Your army is marching toward {0}'s army ({1}🗡 vs {2}🗡)\r\n",
+		
 		"---REGION : Game Exception---" : "",
 		"ResourceUpgradeFailed" : "You can't upgrade *{0}* to *level {1}*.\r\n\r\n",
 		"NotEnoughResources" : "You don't have enough resources!\r\n",
 		"LvlMaxAlready" : "Your *{0}* level is maxed already!\r\n",
+		"FrontMaxNumber" : "You have reached the maximum number of fronts!\r\n",
 
 		"---REGION : Status---" : "",
 		"CurrentResources" : [ 
 			"\r\n*{0}*'s current resources:\n\rGold💰: *{1}* + {2}/turn\n\rWood🌲: *{3}* + {4}/turn\n\rStone🗿: *{5}* + {6}/turn\n\rMithril💎: *{7}* + {8}/turn\n\r"
 			],
 		"CurrentArmyHeader" : "\r\nArmy current status:",
-		"CurrentArmy" : "\r\nFront *{0}* *{1}*: *{2}* troops🗡",
+		"CurrentArmy" : "\r\nFront *{0}* *{1}*: *{2}* 🗡",
 		"CurrentDefendingArmy" : "\r\nArmy in base: *{0}* troops🗡",
 		"TimeUp" : "Time's up for turn {0}",
 

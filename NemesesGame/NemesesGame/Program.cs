@@ -68,9 +68,11 @@ namespace NemesesGame
             {
                await gamesHandler.CallbackQueryHandler(callbackQuery);
             }
-            catch (KeyNotFoundException)
+            catch (KeyNotFoundException e)
             {
                 string reply = GetLangString(0, "NotJoinedGame");
+                Console.WriteLine(e);
+
                 await SendMessage(senderId, reply);
             }
         }

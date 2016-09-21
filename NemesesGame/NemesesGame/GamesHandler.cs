@@ -287,6 +287,7 @@ namespace NemesesGame
                     break;
                 case "Attack":
                     long atkPlayerId;
+                    byte frontId;
 
                     // check if args has the additional parameter...
                     switch (args.Length)
@@ -294,14 +295,16 @@ namespace NemesesGame
                         case 2:
                             await gameDict[groupId].Attack(senderId, msgId);
                             break;
-                        case 3:
-                            atkPlayerId = long.Parse(args[2]);
-                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId);
-                            break;
                         case 4:
                             atkPlayerId = long.Parse(args[2]);
-                            int deployPercent = int.Parse(args[3]);
-                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, deployPercent);
+                            frontId = byte.Parse(args[3]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId);
+                            break;
+                        case 5:
+                            atkPlayerId = long.Parse(args[2]);
+                            frontId = byte.Parse(args[3]);
+                            int deployPercent = int.Parse(args[4]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId, deployPercent);
                             break;
                     }
                     break;
