@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NemesesGame
 {
-    public struct ArmyFront
+    public class ArmyFront
     {
         ArmyState _state;
         int _number;

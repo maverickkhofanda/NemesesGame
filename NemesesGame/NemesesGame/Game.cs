@@ -36,8 +36,7 @@ namespace NemesesGame
         {
             Console.WriteLine("chatName & groupId unassigned yet!");
         }
-
-
+        
         public Game(long ChatId, string ChatName)
         {
             groupId = ChatId;
@@ -90,9 +89,17 @@ namespace NemesesGame
             }
             else
             {
+                // end this turn
                 await TimeUp();
+
+                // turn actions
                 ResourceRegen();
+                //March();
+                //
                 await BroadcastCityStatus();
+
+                // new turn actions
+                // News();
             }
 
             botReply += GetLangString(groupId, "NextTurn", turn, turnInterval);
@@ -157,25 +164,8 @@ namespace NemesesGame
                 }
             }
         }
-
-        void ResourceRegen ()
-        {
-            foreach (KeyValuePair<long, City> kvp in cities)
-            {
-                City city = kvp.Value;
-                city._resources += city.resourceRegen;
-            }
-        }
-
-        public async Task ChooseName(long playerId, string NewCityName)
-        {
-            cities[playerId].playerDetails.cityName = NewCityName;
-            cities[playerId].chat.AddReply(GetLangString(groupId, "NameChosen", NewCityName));
-
-            await cities[playerId].chat.SendReply();
-        }
-
-        #region Game related functions
+        
+        #region Resource Actions
 
         public async Task ResourceUpgrade(long playerId, int messageId, string _resourceType)
         {
@@ -221,6 +211,19 @@ namespace NemesesGame
             await MainMenu(playerId, messageId);
         }
 
+        void ResourceRegen()
+        {
+            foreach (KeyValuePair<long, City> kvp in cities)
+            {
+                City city = kvp.Value;
+                city._resources += city.resourceRegen;
+            }
+        }
+
+        #endregion
+
+        #region Army Actions
+
         public async Task RaiseArmy(long playerId, int messageId/*, string _armyType = null*/, int _armyNumber = 0)
         {
             //ask which armyType
@@ -248,7 +251,7 @@ namespace NemesesGame
             {
                 // now we got the armyNumber
                 // check the price, raise the army, then return to menu
-                
+
                 int goldCost = army.Cost * _armyNumber;
                 Resources payCost = new Resources(goldCost, 0, 0, 0);
                 Console.WriteLine("goldCost: " + goldCost);
@@ -348,14 +351,14 @@ namespace NemesesGame
             {
                 chat.AddReply(GetLangString(groupId, "ChooseOtherPlayer"));
 
-                foreach(KeyValuePair<long, City> kvp in cities)
+                foreach (KeyValuePair<long, City> kvp in cities)
                 {
                     // don't switch out the sender yet... for testing purposes
                     PlayerDetails pDetails = kvp.Value.playerDetails;
 
                     // iterate all fronts
                     Army targetArmy = kvp.Value._army;
-                    for(int i = 0; i < targetArmy.Fronts.Count(); i++)
+                    for (int i = 0; i < targetArmy.Fronts.Count(); i++)
                     {
                         ArmyFront front = targetArmy.Fronts[i];
 
@@ -387,7 +390,7 @@ namespace NemesesGame
                             break;
                         }
                     }
-                    
+
                 }
                 chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
 
@@ -406,9 +409,9 @@ namespace NemesesGame
                     // show how many troops you have
                     chat.AddReply(GetLangString(groupId, "DeployTroopNumber"));
                     chat.AddReply(GetLangString(groupId, "CurrentDefendingArmy", army.Fronts[0].Number));
-                    
+
                     // ask how many percentage of your current defending army do you want to unleash
-                    for (int i = 10; i < 100; i+= 10)
+                    for (int i = 10; i < 100; i += 10)
                     {
                         // need to format this to 2-columns
                         string buttonOutput = string.Format("{0}%", i);
@@ -445,6 +448,103 @@ namespace NemesesGame
             }
 
             // ask how many troops to deploy
+        }
+
+        void DeployArmy(long playerId, long targetId, byte targetFrontId, int deployPercent)
+        {
+            Army army = cities[playerId]._army;
+            CityChatHandler chat = cities[playerId].chat;
+
+            // find new empty front ------------------------------------------------------------
+            byte i = 0;
+            for (i = 0; i < army.Fronts.Count(); i++)
+            {
+                if (army.Fronts[i].Number == 0)
+                {
+                    // Add the new army
+                    float f = army.Fronts[0].Number * (deployPercent * 0.01f);
+                    int armyDeployed = (int)f;
+
+                    army.Fronts[i].Number = armyDeployed;
+
+                    // Remove army from base's army
+                    army.Fronts[0].Number -= armyDeployed;
+                    break;
+                }
+            }
+            // check if no front available
+            if (i >= army.Fronts.Count())
+            {
+                // tell player: you have maximum front
+                chat.AddReply(GetLangString(groupId, "FrontMaxNumber"));
+                return;
+            }
+
+            //Console.WriteLine("newFront: {0} {1}: {2}🗡", playerId, i, army.Fronts[i].Number);
+            // deploy the front ----------------------------------------------------------------
+            army.StartMarch(i, targetId, targetFrontId);
+
+            ArmyFront front = army.Fronts[i];
+            Console.WriteLine("#001 work");
+            Console.WriteLine("front.TargetTelegramId: " + front.TargetTelegramId);
+            PlayerDetails targetDetails = cities[front.TargetTelegramId].playerDetails; // Error
+            Console.WriteLine("#002 work");
+            ArmyFront targetFront = cities[front.TargetTelegramId]._army.Fronts[targetFrontId];
+
+            Console.WriteLine("{0}'s army marching to {1} with {2} troops", playerId, targetDetails.cityName, front.Number);
+
+            // if target is base
+            if (targetFront.State == ArmyState.Base)
+            {
+                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyBase", targetDetails.cityName, front.Number));
+                Console.WriteLine(chat.privateReply);
+            }
+            else
+            {
+                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyFront", targetDetails.cityName, front.Number, targetFront.Number));
+            }
+        }
+
+        void March()
+        {
+            // find each marching city
+
+            // iterate each city
+            foreach(KeyValuePair<long, City> kvp in cities)
+            {
+                // then iterate each fronts
+                foreach (ArmyFront front in kvp.Value._army.Fronts)
+                {
+                    // if front have no army, break to next city
+                    if (front.Number != 0)
+                    {
+                        // if march = 0 (aka. reached the destination), do the thing
+                        if (front.State == ArmyState.March)
+                        {
+                            front.MarchLeft--;
+
+                            if(front.MarchLeft == 0)
+                            {
+                                ArmyFront targetFront = GetFront(front.TargetTelegramId, front.TargetFrontId);
+                                
+                                if (targetFront.State == ArmyState.Base)
+                                {
+                                    // Invade(); // not implemented yet
+                                }
+                                else
+                                {
+                                    // Intercept(); //not implemented yet
+                                }
+                            }
+                            
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
         }
 
         #endregion
@@ -748,64 +848,17 @@ namespace NemesesGame
 
 		public int PlayerCount { get { return playerCount; } }
 
+        public async Task ChooseName(long playerId, string NewCityName)
+        {
+            cities[playerId].playerDetails.cityName = NewCityName;
+            cities[playerId].chat.AddReply(GetLangString(groupId, "NameChosen", NewCityName));
+
+            await cities[playerId].chat.SendReply();
+        }
+
         #endregion
 
         #region Behind the scenes
-        
-        void DeployArmy(long playerId, long targetId, byte targetFrontId, int deployPercent)
-        {
-            Army army = cities[playerId]._army;
-            CityChatHandler chat = cities[playerId].chat;
-
-            // find new empty front ------------------------------------------------------------
-            byte i = 0;
-            for (i = 0; i < army.Fronts.Count(); i++)
-            {
-                if (army.Fronts[i].Number == 0)
-                {
-                    // Add the new army
-                    float f = army.Fronts[0].Number * (deployPercent * 0.01f);
-                    int armyDeployed = (int) f;
-
-                    army.Fronts[i].Number = armyDeployed;
-
-                    // Remove army from base's army
-                    army.Fronts[0].Number -= armyDeployed;
-                    break;
-                }
-            }
-            // check if no front available
-            if (i >= army.Fronts.Count())
-            {
-                // tell player: you have maximum front
-                chat.AddReply(GetLangString(groupId, "FrontMaxNumber"));
-                return;
-            }
-
-            //Console.WriteLine("newFront: {0} {1}: {2}🗡", playerId, i, army.Fronts[i].Number);
-            // deploy the front ----------------------------------------------------------------
-            army.StartMarch(i, targetId, targetFrontId);
-            
-            ArmyFront front = army.Fronts[i];
-            Console.WriteLine("#001 work");
-            Console.WriteLine("front.TargetTelegramId: " + front.TargetTelegramId);
-            PlayerDetails targetDetails = cities[front.TargetTelegramId].playerDetails; // Error
-            Console.WriteLine("#002 work");
-            ArmyFront targetFront = cities[front.TargetTelegramId]._army.Fronts[targetFrontId];
-
-            Console.WriteLine("{0}'s army marching to {1} with {2} troops", playerId, targetDetails.cityName, front.Number);
-
-            // if target is base
-            if (targetFront.State == ArmyState.Base)
-            {
-                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyBase", targetDetails.cityName, front.Number));
-                Console.WriteLine(chat.privateReply);
-            }
-            else
-            {
-                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyFront", targetDetails.cityName, front.Number, targetFront.Number));
-            }
-        }
 
         private void Timer(int timerInterval, ElapsedEventHandler elapsedEventHandler, bool timerEnabled = true)
         {
@@ -845,6 +898,13 @@ namespace NemesesGame
 
                 await kvp.Value.chat.SendReply();
             }
+        }
+
+        ArmyFront GetFront(long playerId, byte frontId)
+        {
+            ArmyFront af = cities[playerId]._army.Fronts[frontId];
+
+            return af;
         }
 
         #endregion
