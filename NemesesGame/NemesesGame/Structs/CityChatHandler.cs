@@ -36,8 +36,31 @@ namespace NemesesGame
 
         public void SetMenu()
         {
-            menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
-            //Console.WriteLine()
+            if (buttons.Count() < 8)
+            {
+                menu = new InlineKeyboardMarkup(buttons.Select(x => new[] { x }).ToArray());
+            }
+            else
+            {
+                SetTwoColMenu();
+            }
+        }
+
+        public void SetTwoColMenu()
+        {
+            var twoMenu = new List<InlineKeyboardButton[]>();
+            for (var i = 0; i < buttons.Count; i++)
+            {
+                if (buttons.Count - 1 == i)
+                {
+                    twoMenu.Add(new[] { buttons[i] });
+                }
+                else
+                    twoMenu.Add(new[] { buttons[i], buttons[i + 1] });
+                i++;
+            }
+
+            menu = new InlineKeyboardMarkup(twoMenu.ToArray());
         }
 
         /// <summary>
