@@ -248,10 +248,16 @@ namespace NemesesGame
             long groupId = long.Parse(args[1]);
 
             
-            if (gameDict[groupId].cities[senderId].chat.msgId != msgId)
+            if (gameDict[groupId].cities[senderId].chat.msgId == 0)
             {
                 gameDict[groupId].cities[senderId].chat.msgId = msgId;
             }
+			else
+			{
+				Console.WriteLine("this msgId: " + msgId);
+				msgId = gameDict[groupId].cities[senderId].chat.msgId;
+				Console.WriteLine("new msgId: " + msgId);
+			}
             
               
             Console.WriteLine("\r\nCallbackQuery received from " + senderName + " (" + senderId + ")");

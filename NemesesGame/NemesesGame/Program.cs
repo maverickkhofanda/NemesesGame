@@ -71,7 +71,7 @@ namespace NemesesGame
             catch (KeyNotFoundException e)
             {
                 string reply = GetLangString(0, "NotJoinedGame");
-                Console.WriteLine(e);
+                //Console.WriteLine(e);
 
                 await SendMessage(senderId, reply);
             }

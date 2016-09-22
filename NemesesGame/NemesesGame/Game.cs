@@ -48,11 +48,11 @@ namespace NemesesGame
         {
 			if (gameStatus == GameStatus.Hosted)
 			{
+				gameStatus = GameStatus.Starting;
 				botReply += GetLangString(groupId, "StartGameGroup");
 				await PlayerList();
 
 				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
-				gameStatus = GameStatus.Starting;
 				await BotReply(groupId);
 
 				Timer(turnInterval, Turn);
@@ -82,9 +82,12 @@ namespace NemesesGame
                     PlayerDetails pDetails = kvp.Value.playerDetails;
 
                     chat.AddReply(GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
-                    await chat.SendReply();
-                    await BroadcastCityStatus();
+                    // await chat.SendReply();
+                    BroadcastCityStatus();
+
                     botReply += GetLangString(groupId, "IteratePlayerCityName", pDetails.firstName, pDetails.cityName);
+
+					await MainMenu();
                 }
             }
             else
@@ -94,9 +97,14 @@ namespace NemesesGame
 
                 // turn actions
                 ResourceRegen();
-                //March();
-                //
-                await BroadcastCityStatus();
+				//March();
+
+				foreach (KeyValuePair<long, City> kvp in cities)
+				{
+					CityStatus(kvp.Key);
+					await MainMenu();
+				}
+					
 
                 // new turn actions
                 // News();
@@ -106,7 +114,7 @@ namespace NemesesGame
 			await BotReply(groupId);
 
             //Insert turn implementation here
-            await MainMenu();
+            
 		}
 
         void CityStatus (long playerId)
@@ -132,7 +140,10 @@ namespace NemesesGame
 
             for (int i = 0; i < army.Fronts.Length; i++)
             {
-                if (army.Fronts[i].Number != 0)
+				//int numb = army.Fronts[i].Number;
+				//Console.WriteLine("front{0}: {1}", i, numb);
+
+				if (army.Fronts[i] == null)
                 {
                     //int frontId = i + 1;
 
@@ -361,7 +372,7 @@ namespace NemesesGame
                     for (int i = 0; i < targetArmy.Fronts.Count(); i++)
                     {
                         ArmyFront front = targetArmy.Fronts[i];
-
+						Console.WriteLine("{0}\r\n", front.Number);
                         // check if armyFront is empty
                         if (front.Number != 0)
                         {
@@ -570,6 +581,7 @@ namespace NemesesGame
                     chat.ClearReplyHistory();
 
                     SetMainMenu(kvp.Key);
+
 
                     await chat.SendReply();
                 }
@@ -890,13 +902,13 @@ namespace NemesesGame
 			}
 		}
 
-        async Task BroadcastCityStatus()
+        void BroadcastCityStatus()
         {
             foreach (KeyValuePair<long, City> kvp in cities)
             {
                 CityStatus(kvp.Key);
 
-                await kvp.Value.chat.SendReply();
+                // await kvp.Value.chat.SendReply();
             }
         }
 
