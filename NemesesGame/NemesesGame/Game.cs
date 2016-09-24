@@ -540,7 +540,7 @@ namespace NemesesGame
                                 
                                 if (targetFront.State == ArmyState.Base)
                                 {
-                                    // Invade(); // not implemented yet
+                                    Invade(front, targetFront);
                                 }
                                 else
                                 {
@@ -555,6 +555,47 @@ namespace NemesesGame
                         break;
                     }
                 }
+            }
+        }
+
+        void Invade(ArmyFront offFront, ArmyFront defFront)
+        {
+            float defaultBase = 0.35f;
+            float widthOffset = 0.25f;
+
+            int atkCP = offFront.CombatPower;
+            int defCP = defFront.CombatPower;
+            int atkNumber = offFront.Number;
+            int defNumber = defFront.Number;
+
+            float outcome = (atkCP - defCP) / defCP;
+            
+            float atkCasualtyPct = defaultBase + ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
+            float defCasualtyPct = defaultBase - ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
+
+            Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
+            Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
+
+            int atkCasualty = atkNumber * (int)atkCasualtyPct;
+            int defCasualty = defNumber * (int)defCasualtyPct;
+
+            offFront.Number -= atkCasualty;
+            defFront.Number -= defCasualty;
+
+            //win loss
+            if (outcome > 0.1 )
+            {
+                // invader win
+                // send News
+                
+            }
+            else if (outcome < 0.1 )
+            {
+                // defender win
+            }
+            else
+            {
+                // its a tie
             }
         }
 

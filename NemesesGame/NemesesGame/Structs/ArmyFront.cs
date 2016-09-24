@@ -12,16 +12,16 @@ namespace NemesesGame
         int _number;
         long _targetTelegramId;
         byte _targetFrontId;
-        //float _power;
+        float _power;
         byte _marchLeft;
         
-        public ArmyFront(ArmyState armyState, int number, long targetPlayerId = 0, byte targetFrontId = 0/*, float power*/, byte marchLeft = 0)
+        public ArmyFront(ArmyState armyState, int number, long targetPlayerId = 0, byte targetFrontId = 0, float power = 1.0f, byte marchLeft = 0)
         {
             _state = armyState;
             _number = number;
             _targetTelegramId = targetPlayerId;
             _targetFrontId = targetFrontId;
-            //_power = power;
+            _power = power;
             _marchLeft = marchLeft;
         }
 
@@ -33,11 +33,20 @@ namespace NemesesGame
         public long TargetTelegramId { get { return _targetTelegramId; } set { _targetTelegramId = value; } }
         public byte TargetFrontId { get { return _targetFrontId; } set { _targetFrontId = value; } }
         public byte MarchLeft { get { return _marchLeft; } set { _marchLeft = value; } }
+        public float Power { get { return _power; } set { _power = value; } }
+        public int CombatPower
+        {
+            get
+            {
+                float f = _power * _number;
+                return (int) f;
+            }
+        }
 
         /// <summary>
         /// This front's target for current action
         /// </summary>
         //public Tuple<long, int> Target { get { return _target; } set { _target = value; } }
-        //public float Power { get { return _power; } set { _power = value; } }
+
     }
 }
