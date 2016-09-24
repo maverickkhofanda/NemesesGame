@@ -224,14 +224,14 @@ namespace NemesesGame
             try
             {
                 await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
-                Console.WriteLine("Message editted at " + chatId);
+                Console.WriteLine("Message editted at {0} (msgId: {1})", chatId, msgId);
             }
             catch (Telegram.Bot.Exceptions.ApiRequestException e)
             {
                 count++;
                 if (count <= 10)
                 {
-                    Console.WriteLine("Error EditMessage to {0} ({1})", chatId, e.ToString());
+                    //Console.WriteLine("Error EditMessage to {0} ({1})", chatId, e.ToString());
                     await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
                 }
                 else

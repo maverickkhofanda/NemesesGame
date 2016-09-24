@@ -143,7 +143,7 @@ namespace NemesesGame
 				//int numb = army.Fronts[i].Number;
 				//Console.WriteLine("front{0}: {1}", i, numb);
 
-				if (army.Fronts[i] == null)
+				if (army.Fronts[i] != null)
                 {
                     //int frontId = i + 1;
 
@@ -372,9 +372,9 @@ namespace NemesesGame
                     for (int i = 0; i < targetArmy.Fronts.Count(); i++)
                     {
                         ArmyFront front = targetArmy.Fronts[i];
-						Console.WriteLine("{0}\r\n", front.Number);
-                        // check if armyFront is empty
-                        if (front.Number != 0)
+
+                        // check if armyFront is null
+                        if (front != null)
                         {
                             // if army in base, enemy can't see his number. Otherwise, it's visible
                             if (front.State == ArmyState.Base)
@@ -470,14 +470,14 @@ namespace NemesesGame
             byte i = 0;
             for (i = 0; i < army.Fronts.Count(); i++)
             {
-                if (army.Fronts[i].Number == 0)
+                if (army.Fronts[i] == null)
                 {
                     // Add the new army
                     float f = army.Fronts[0].Number * (deployPercent * 0.01f);
                     int armyDeployed = (int)f;
 
-                    army.Fronts[i].Number = armyDeployed;
-
+                    army.Fronts[i] = new ArmyFront(ArmyState.Base, armyDeployed);
+                    
                     // Remove army from base's army
                     army.Fronts[0].Number -= armyDeployed;
                     break;
@@ -496,10 +496,10 @@ namespace NemesesGame
             army.StartMarch(i, targetId, targetFrontId);
 
             ArmyFront front = army.Fronts[i];
-            Console.WriteLine("#001 work");
-            Console.WriteLine("front.TargetTelegramId: " + front.TargetTelegramId);
+            //Console.WriteLine("#001 work");
+            //Console.WriteLine("front.TargetTelegramId: " + front.TargetTelegramId);
             PlayerDetails targetDetails = cities[front.TargetTelegramId].playerDetails; // Error
-            Console.WriteLine("#002 work");
+            //Console.WriteLine("#002 work");
             ArmyFront targetFront = cities[front.TargetTelegramId]._army.Fronts[targetFrontId];
 
             Console.WriteLine("{0}'s army marching to {1} with {2} troops", playerId, targetDetails.cityName, front.Number);

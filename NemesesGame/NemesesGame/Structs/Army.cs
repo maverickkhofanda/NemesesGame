@@ -47,9 +47,9 @@ namespace NemesesGame
 
             //Console.WriteLine("targetId= " + targetId);
             //Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
-            Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
-            Console.WriteLine("TargetFrontId = " + Fronts[thisFrontId].TargetFrontId);
-            Console.WriteLine("armyState = " + Fronts[thisFrontId].State);
+            //Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
+            //Console.WriteLine("TargetFrontId = " + Fronts[thisFrontId].TargetFrontId);
+            //Console.WriteLine("armyState = " + Fronts[thisFrontId].State);
             
 
         }
