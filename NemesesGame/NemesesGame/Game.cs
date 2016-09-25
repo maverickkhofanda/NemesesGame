@@ -53,14 +53,14 @@ namespace NemesesGame
 				await PlayerList();
 
 				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
-				await BotReply(groupId);
+				await BotReply();
 
 				Timer(turnInterval, Turn);
 			}
             else
 			{
 				botReply += GetLangString(groupId, "StartedGameGroup");
-				await BotReply(groupId);
+				await BotReply();
 			}
 		}
 
@@ -70,10 +70,10 @@ namespace NemesesGame
 		public async void Turn(object sender, ElapsedEventArgs e)
         {
             turn++;
-			gameStatus = GameStatus.InGame;
 
             if(turn == 1)
             {
+                gameStatus = GameStatus.InGame;
                 botReply += GetLangString(groupId, "PlayerListHeader");
 
                 foreach (KeyValuePair<long, City> kvp in cities)
@@ -81,14 +81,14 @@ namespace NemesesGame
                     CityChatHandler chat = kvp.Value.chat;
                     PlayerDetails pDetails = kvp.Value.playerDetails;
 
-                    chat.AddReply(GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
+                    chat.AddReply(ReplyType.status, GetLangString(groupId, "StartGamePrivate", pDetails.cityName));
                     // await chat.SendReply();
-                    BroadcastCityStatus();
+                    // BroadcastCityStatus();
 
                     botReply += GetLangString(groupId, "IteratePlayerCityName", pDetails.firstName, pDetails.cityName);
-
-					await MainMenu();
                 }
+                
+                await MainMenu();
             }
             else
             {
@@ -97,21 +97,16 @@ namespace NemesesGame
 
                 // turn actions
                 ResourceRegen();
-				//March();
-
-				foreach (KeyValuePair<long, City> kvp in cities)
-				{
-					CityStatus(kvp.Key);
-					await MainMenu();
-				}
-					
+                //March();
+                
+                await MainMenu();
 
                 // new turn actions
                 // News();
             }
 
             botReply += GetLangString(groupId, "NextTurn", turn, turnInterval);
-			await BotReply(groupId);
+			await BotReply();
 
             //Insert turn implementation here
             
@@ -122,13 +117,16 @@ namespace NemesesGame
             // not splitted to ResourceStatus and ArmyStatus yet
             City city = cities[playerId];
 
-            city.chat.AddReply(GetLangString(groupId, "CurrentResources",
+            city.chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentResources",
                     city.playerDetails.cityName,
                     city._resources.Gold, city.resourceRegen.Gold,
                     city._resources.Wood, city.resourceRegen.Wood,
                     city._resources.Stone, city.resourceRegen.Stone,
                     city._resources.Mithril, city.resourceRegen.Mithril));
-            city.chat.AddReply(GetLangString(groupId, "NextTurn", turn, turnInterval));
+
+            ArmyStatus(playerId);
+            
+            city.chat.AddReply(ReplyType.status, GetLangString(groupId, "NextTurn", turn, turnInterval));
         }
 
         void ArmyStatus (long playerId)
@@ -136,13 +134,10 @@ namespace NemesesGame
             Army army = cities[playerId]._army;
             CityChatHandler chat = cities[playerId].chat;
 
-            chat.AddReply(GetLangString(groupId, "CurrentArmyHeader"));
+            chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmyHeader"));
 
             for (int i = 0; i < army.Fronts.Length; i++)
             {
-				//int numb = army.Fronts[i].Number;
-				//Console.WriteLine("front{0}: {1}", i, numb);
-
 				if (army.Fronts[i] != null)
                 {
                     //int frontId = i + 1;
@@ -153,7 +148,7 @@ namespace NemesesGame
                     {
                         string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
 
-                        chat.AddReply(GetLangString(groupId, "CurrentArmy",
+                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmy",
                             "",
                             GetLangString(groupId, armyState),
                             army.Fronts[i].Number));
@@ -163,7 +158,7 @@ namespace NemesesGame
                         string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
                         string frontTarget = cities[army.Fronts[i].TargetTelegramId].playerDetails.cityName;
 
-                        chat.AddReply(GetLangString(groupId, "CurrentArmy",
+                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmy",
                             i,
                             GetLangString(groupId, armyState, frontTarget),
                             army.Fronts[i].Number));
@@ -204,20 +199,20 @@ namespace NemesesGame
                     textLevel = curLevel;
                     textLevel++;
 
-                    chat.AddReply(GetLangString(groupId, "ResourceUpgraded", GetLangString(groupId, _resourceType), textLevel));
+                    chat.AddReply(ReplyType.status, GetLangString(groupId, "ResourceUpgraded", GetLangString(groupId, _resourceType), textLevel));
                 }
                 else
                 {
                     // Send message failure
-                    chat.AddReply(GetLangString(groupId, "ResourceUpgradeFailed", _resourceType, textLevel+1));
+                    chat.AddReply(ReplyType.status, GetLangString(groupId, "ResourceUpgradeFailed", _resourceType, textLevel+1));
                 }
             }
             else
             {
-                chat.AddReply(GetLangString(groupId, "LvlMaxAlready", _resourceType));
+                chat.AddReply(ReplyType.status, GetLangString(groupId, "LvlMaxAlready", _resourceType));
             }
 
-            CityStatus(playerId);
+            //CityStatus(playerId);
             // Back to main menu
             await MainMenu(playerId, messageId);
         }
@@ -244,7 +239,7 @@ namespace NemesesGame
             if (_armyNumber == 0)
             {
                 // ask how many army to raise
-                chat.AddReply(GetLangString(groupId, "AskRaiseArmyNumber", army.Cost));
+                chat.AddReply(ReplyType.command, GetLangString(groupId, "AskRaiseArmyNumber", army.Cost));
 
                 //lets give the player options : 100, 200, 300, 400, 500
                 for (int i = 100; i <= 500; i += 100)
@@ -271,86 +266,15 @@ namespace NemesesGame
                 {
                     army.Fronts[0].Number += _armyNumber;
 
-                    chat.AddReply(GetLangString(groupId, "RaiseArmySuccess", _armyNumber));
-                    Console.WriteLine("Raise Army Success: " + chat.privateReply);
+                    chat.AddReply(ReplyType.status, GetLangString(groupId, "RaiseArmySuccess", _armyNumber));
                 }
 
-                CityStatus(playerId);
+                //CityStatus(playerId);
                 ArmyStatus(playerId);
                 // Back to main menu
                 await MainMenu(playerId, messageId);
 
             }
-
-            /* revamp Army... this code is not used
-            // entering the RaiseArmy menu...
-            if (_armyType == null && _armyNumber == 0)
-            {
-                //ask which armyType
-                chat.AddReply(GetLangString(groupId, "AskRaiseArmyType"));
-
-                foreach(KeyValuePair<ArmyType, int> kvp in cities[playerId]._army.TypeNumber)
-                {
-                    string armyType = Enum.GetName(typeof(ArmyType), kvp.Key);
-
-                    string buttonOutput = GetLangString(groupId, "ArmyPrice", 
-                        GetLangString(groupId, armyType),
-                        cities[playerId]._army.Cost[kvp.Key]); // gets the price
-                    chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"RaiseArmy|{groupId}|{armyType}"));
-                }
-                chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
-
-                chat.SetMenu();
-                chat.AddReplyHistory();
-                await chat.EditMessage();
-            }
-            else
-            {
-                //ask how much army do you want to raise, give the price in the chat
-                ArmyType armyType = (ArmyType) Enum.Parse(typeof(ArmyType), _armyType);
-                int armyCost = cities[playerId]._army.Cost[armyType];
-
-                // ask the player to input army number
-                if (_armyNumber == 0)
-                {
-                    chat.AddReply(GetLangString(groupId, "AskRaiseArmyNumber",
-                    GetLangString(groupId, _armyType),
-                    armyCost));
-
-                    //lets give the player options : 100, 200, 300, 400, 500
-                    for (int i = 100; i <= 500; i += 100)
-                    {
-                        string buttonOutput = string.Format("{0} ({1}💰)", i, armyCost * i);
-                        chat.AddMenuButton(new InlineKeyboardButton(buttonOutput, $"RaiseArmy|{groupId}|{_armyType}|{i}"));
-                    }
-                    chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
-
-                    chat.SetMenu();
-                    chat.AddReplyHistory();
-                    await chat.EditMessage();
-                }
-                // we got the army number... now process it
-                else
-                {
-                    int goldCost = armyCost * _armyNumber;
-                    Resources payCost = new Resources(goldCost, 0, 0, 0);
-                    if (PayCost(ref cities[playerId]._resources, payCost, playerId))
-                    {
-                        cities[playerId]._army.TypeNumber[armyType] += _armyNumber;
-                        chat.AddReply(GetLangString(groupId, "RaiseArmySuccess",
-                            _armyNumber,
-                            GetLangString(groupId, _armyType)));
-
-                        Console.WriteLine("{0} current number: {1}", armyType, cities[playerId]._army.TypeNumber[armyType]);
-                    }
-
-                    CityStatus(playerId);
-                    // Back to main menu
-                    await MainMenu(playerId, messageId);
-                }
-            }
-            */
-
         }
 
         public async Task Attack(long playerId, int messageId, long targetId = 0, byte frontId = 0, int deployPercent = 0)
@@ -360,7 +284,7 @@ namespace NemesesGame
             // ask attack which country ---------------------------------------------------
             if (targetId == 0)
             {
-                chat.AddReply(GetLangString(groupId, "ChooseOtherPlayer"));
+                chat.AddReply(ReplyType.command, GetLangString(groupId, "ChooseOtherPlayer"));
 
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
@@ -418,8 +342,8 @@ namespace NemesesGame
                 if (deployPercent == 0)
                 {
                     // show how many troops you have
-                    chat.AddReply(GetLangString(groupId, "DeployTroopNumber"));
-                    chat.AddReply(GetLangString(groupId, "CurrentDefendingArmy", army.Fronts[0].Number));
+                    chat.AddReply(ReplyType.command, GetLangString(groupId, "DeployTroopNumber"));
+                    chat.AddReply(ReplyType.command, GetLangString(groupId, "CurrentDefendingArmy", army.Fronts[0].Number));
 
                     // ask how many percentage of your current defending army do you want to unleash
                     for (int i = 10; i < 100; i += 10)
@@ -448,7 +372,6 @@ namespace NemesesGame
                 {
                     // TODO : Insert news in Group
                     DeployArmy(playerId, targetId, frontId, deployPercent);
-                    Console.WriteLine("Reply to {0}: {1} ", playerId, chat.privateReply);
 
                     ArmyStatus(playerId);
 
@@ -487,7 +410,7 @@ namespace NemesesGame
             if (i >= army.Fronts.Count())
             {
                 // tell player: you have maximum front
-                chat.AddReply(GetLangString(groupId, "FrontMaxNumber"));
+                chat.AddReply(ReplyType.status, GetLangString(groupId, "FrontMaxNumber"));
                 return;
             }
 
@@ -496,10 +419,7 @@ namespace NemesesGame
             army.StartMarch(i, targetId, targetFrontId);
 
             ArmyFront front = army.Fronts[i];
-            //Console.WriteLine("#001 work");
-            //Console.WriteLine("front.TargetTelegramId: " + front.TargetTelegramId);
-            PlayerDetails targetDetails = cities[front.TargetTelegramId].playerDetails; // Error
-            //Console.WriteLine("#002 work");
+            PlayerDetails targetDetails = cities[front.TargetTelegramId].playerDetails;
             ArmyFront targetFront = cities[front.TargetTelegramId]._army.Fronts[targetFrontId];
 
             Console.WriteLine("{0}'s army marching to {1} with {2} troops", playerId, targetDetails.cityName, front.Number);
@@ -507,28 +427,29 @@ namespace NemesesGame
             // if target is base
             if (targetFront.State == ArmyState.Base)
             {
-                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyBase", targetDetails.cityName, front.Number));
-                Console.WriteLine(chat.privateReply);
+                chat.AddReply(ReplyType.status, GetLangString(groupId, "ArmyMarchEnemyBase", targetDetails.cityName, front.Number));
             }
             else
             {
-                chat.AddReply(GetLangString(groupId, "ArmyMarchEnemyFront", targetDetails.cityName, front.Number, targetFront.Number));
+                chat.AddReply(ReplyType.status, GetLangString(groupId, "ArmyMarchEnemyFront", targetDetails.cityName, front.Number, targetFront.Number));
             }
         }
 
         void March()
         {
-            // find each marching city
+            // find each marching front
 
             // iterate each city
             foreach(KeyValuePair<long, City> kvp in cities)
             {
                 // then iterate each fronts
-                foreach (ArmyFront front in kvp.Value._army.Fronts)
+                for (byte i = 0; i < 10; i++)
                 {
                     // if front have no army, break to next city
-                    if (front.Number != 0)
+                    if (kvp.Value._army.Fronts[i] != null)
                     {
+                        ArmyFront front = kvp.Value._army.Fronts[i];
+
                         // if march = 0 (aka. reached the destination), do the thing
                         if (front.State == ArmyState.March)
                         {
@@ -536,18 +457,17 @@ namespace NemesesGame
 
                             if(front.MarchLeft == 0)
                             {
-                                ArmyFront targetFront = GetFront(front.TargetTelegramId, front.TargetFrontId);
+                                ArmyState targetState = GetFront(front.TargetTelegramId, front.TargetFrontId).State;
                                 
-                                if (targetFront.State == ArmyState.Base)
+                                if (targetState == ArmyState.Base)
                                 {
-                                    Invade(front, targetFront);
+                                    Invade(kvp.Key, i, front.TargetTelegramId, front.TargetFrontId);
                                 }
                                 else
                                 {
                                     // Intercept(); //not implemented yet
                                 }
                             }
-                            
                         }
                     }
                     else
@@ -557,9 +477,12 @@ namespace NemesesGame
                 }
             }
         }
-
-        void Invade(ArmyFront offFront, ArmyFront defFront)
+        
+        void Invade(long atkId, byte atkFrontId, long defId, byte defFrontId)
         {
+            ArmyFront offFront = cities[atkId]._army.Fronts[atkFrontId];
+            ArmyFront defFront = cities[defId]._army.Fronts[defFrontId];
+
             float defaultBase = 0.35f;
             float widthOffset = 0.25f;
 
@@ -568,10 +491,19 @@ namespace NemesesGame
             int atkNumber = offFront.Number;
             int defNumber = defFront.Number;
 
-            float outcome = (atkCP - defCP) / defCP;
-            
+            // let's give 'outcome' a max number of 100% (or 1)
+            float outcome = atkCP >= defCP ?
+                (atkCP - defCP) / atkCP :
+                - ((defCP - atkCP) / defCP); // if 'defCP' is higher, make it minus
+
+            // let's do linear...
+            float atkCasualtyPct = defaultBase + (widthOffset * outcome);
+            float defCasualtyPct = defaultBase - (widthOffset * outcome);
+
+            /* wrong desired graph
             float atkCasualtyPct = defaultBase + ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
             float defCasualtyPct = defaultBase - ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
+            */
 
             Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
             Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
@@ -582,20 +514,48 @@ namespace NemesesGame
             offFront.Number -= atkCasualty;
             defFront.Number -= defCasualty;
 
+            // now, we send the outcomes news...
+
+            PlayerDetails atkPD = cities[atkId].playerDetails;
+            PlayerDetails defPD = cities[defId].playerDetails;
+
+            CityChatHandler atkChat = cities[atkId].chat;
+            CityChatHandler defChat = cities[defId].chat;
+
             //win loss
             if (outcome > 0.1 )
             {
                 // invader win
-                // send News
-                
+                botReply += GetLangString(groupId, "InvaderWinBroadcast", atkPD.cityName, defPD.cityName);
+
+                // chat details to players
+                atkChat.AddReply(ReplyType.status, 
+                    GetLangString(groupId, "InvaderWinPrivate", defPD.cityName, outcome * 100, atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "DefenderLosePrivate", atkPD.cityName, outcome * -100, defCasualty, defFront.Number));
+
             }
             else if (outcome < 0.1 )
             {
                 // defender win
+                botReply += GetLangString(groupId, "DefenderWinBroadcast", defPD.cityName, atkPD.cityName);
+
+                // chat details to players
+                atkChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InvaderLostPrivate", defPD.cityName, outcome * 100, atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "DefenderWinPrivate", atkPD.cityName, outcome * -100, defCasualty, defFront.Number));
             }
             else
             {
                 // its a tie
+                botReply += GetLangString(groupId, "InvadeTieBroadcast", defPD.cityName, atkPD.cityName);
+
+                // chat details to players
+                atkChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InvaderTiePrivate", defPD.cityName, atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "DefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
             }
         }
 
@@ -607,6 +567,9 @@ namespace NemesesGame
             if (playerId != 0 && messageId != 0)
             {
                 // this 'if' block can be used after one task has finished
+                CityStatus(playerId);
+                //ArmyStatus(playerId);
+
                 CityChatHandler chat = cities[playerId].chat;
                 chat.ClearReplyHistory();
 
@@ -618,13 +581,18 @@ namespace NemesesGame
             {
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
+                    CityStatus(kvp.Key);
+                    //ArmyStatus(kvp.Key);
+
                     CityChatHandler chat = cities[kvp.Key].chat;
                     chat.ClearReplyHistory();
 
                     SetMainMenu(kvp.Key);
 
-
-                    await chat.SendReply();
+                    if (chat.cmdMsgId == 0 && chat.statusMsgId == 0)
+                        await chat.SendReply();
+                    else
+                        await chat.EditMessage();
                 }
             }
         }
@@ -633,25 +601,23 @@ namespace NemesesGame
         void SetMainMenu(long playerId)
         {
             CityChatHandler chat = cities[playerId].chat;
-            chat.AddReply(GetLangString(groupId, "MainMenu"));
+            chat.AddReply(ReplyType.command, GetLangString(groupId, "MainMenu"));
 
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Attack"), $"Attack|{groupId}"));
             // no Back button
             chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
-
-            //intentionally doubled ==> trying 1 reply history
+            
             chat.AddReplyHistory();
-            //chat.AddReplyHistory();
         }
         
         public async Task AssignTask(long playerId, int messageId)
         {
             CityChatHandler chat = cities[playerId].chat;
 
-            CityStatus(playerId);
-            chat.AddReply(GetLangString(groupId, "AssignTask"));
+            //CityStatus(playerId);
+            chat.AddReply(ReplyType.command, GetLangString(groupId, "AssignTask"));
 
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "RaiseArmy"), $"RaiseArmy|{groupId}"));
@@ -665,8 +631,9 @@ namespace NemesesGame
         public async Task MyStatus(long playerId, int messageId)
         {
             CityStatus(playerId);
+            ArmyStatus(playerId);
 
-            SetMainMenu(playerId);
+            //SetMainMenu(playerId);
             await cities[playerId].chat.EditMessage();
         }
 
@@ -674,7 +641,7 @@ namespace NemesesGame
         {
             CityChatHandler chat = cities[playerId].chat;
 
-            chat.AddReply(GetLangString(groupId, "UpgradeProductionHeader"));
+            chat.AddReply(ReplyType.command, GetLangString(groupId, "AskUpgradeProductionHeader"));
 
             // Creating strings for button, with all upgrades & current level
             string woodString = "";
@@ -739,7 +706,7 @@ namespace NemesesGame
 
 				//Console.WriteLine("upgradeCost({0}): {1}", thisResourceString, upgradeCost);
 				
-                chat.AddReply(GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, currentLvl+1 ,upgradeCost));
+                chat.AddReply(ReplyType.command, GetLangString(groupId, "ResourceUpgradePriceCost", thisResourceString, currentLvl+1 ,upgradeCost));
 				buttonString = thisResourceString + " : " + resourceLevels;
 
                 //output
@@ -778,13 +745,17 @@ namespace NemesesGame
                 chat.menu = chat.menuHistory.Pop();
                 chat.menu = chat.menuHistory.Pop();
 
-                chat.privateReply = chat.replyHistory.Pop();
-                chat.privateReply = chat.replyHistory.Pop();
+                chat.statusString = chat.statusReplyHistory.Pop();
+                chat.statusString = chat.statusReplyHistory.Pop();
+
+                chat.cmdString = chat.cmdReplyHistory.Pop();
+                chat.cmdString = chat.cmdReplyHistory.Pop();
             }
             else
             {
                 chat.menu = chat.menuHistory.Pop();
-                chat.privateReply = chat.replyHistory.Pop();
+                chat.statusString = chat.statusReplyHistory.Pop();
+                chat.cmdString = chat.cmdReplyHistory.Pop();
             }
             
             await chat.EditMessage();
@@ -792,12 +763,20 @@ namespace NemesesGame
 
         public async Task TimeUp()
         {
-            // let's kill this 2 times
+            // let's kill this 3 times
             for (byte i = 0; i < 3; i++)
             {
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
-                    kvp.Value.chat.AddReply(GetLangString(groupId, "TimeUp", turn - 1) 
+                    CityChatHandler chat = kvp.Value.chat;
+                    
+                    // clear everythingggg
+                    chat.cmdString = "";
+                    chat.buttons.Clear();
+                    chat.menu = null;
+
+
+                    chat.AddReply(ReplyType.command, GetLangString(groupId, "TimeUp", turn - 1) 
                         + new string ('!', i));
                     await kvp.Value.chat.EditMessage();
                     
@@ -812,14 +791,14 @@ namespace NemesesGame
         {
             gameStatus = GameStatus.Hosted;
             botReply += "New game is made in this lobby!\r\n";
-            await BotReply(groupId);
+            await BotReply();
         }
 
         public async Task GameUnhosted()
         {
             gameStatus = GameStatus.Unhosted;
             botReply += "Lobby unhosted!\r\n";
-            await BotReply(groupId);
+            await BotReply();
         }
         public bool PlayerCheck(long telegramId, string firstName, string lastName)
         {
@@ -853,12 +832,12 @@ namespace NemesesGame
 					await GameHosted();
 				}
                 botReply += GetLangString(groupId, "JoinedGame", firstName, lastName).Replace("  ", " ");
-				await BotReply(groupId);
+				await BotReply();
 			}
 			else
 			{
                 botReply += GetLangString(groupId, "AlreadyJoinedGame", firstName);
-				await BotReply(groupId);
+				await BotReply();
 			}
 		}
 
@@ -873,12 +852,12 @@ namespace NemesesGame
                     botReply += string.Format("*{0}* *{1}*\r\n", kvp.Value.playerDetails.firstName, kvp.Value.playerDetails.lastName);
 				}
 
-				await BotReply(groupId);
+				await BotReply();
 			}
 			else
 			{
 				botReply += "No game has been hosted in this lobby yet.\r\nUse /joingame to make one!\r\n";
-				await BotReply(groupId);
+				await BotReply();
 			}
 		}
 
@@ -890,12 +869,12 @@ namespace NemesesGame
 				playerCount--;
 
                 botReply += GetLangString(groupId, "LeaveGame");
-				await BotReply(groupId);
+				await BotReply();
 			}
 			else
 			{
 				botReply += firstName + " " + lastName + " hasn't join the lobby yet!\r\n";
-				await BotReply(groupId);
+				await BotReply();
 			}
 		}
 
@@ -904,7 +883,7 @@ namespace NemesesGame
         public async Task ChooseName(long playerId, string NewCityName)
         {
             cities[playerId].playerDetails.cityName = NewCityName;
-            cities[playerId].chat.AddReply(GetLangString(groupId, "NameChosen", NewCityName));
+            cities[playerId].chat.AddReply(ReplyType.general, GetLangString(groupId, "NameChosen", NewCityName));
 
             await cities[playerId].chat.SendReply();
         }
@@ -931,7 +910,7 @@ namespace NemesesGame
 			{
                 // Resource not enough
                 //Console.WriteLine("Not enough resources\r\n");
-                cities[playerId].chat.AddReply(GetLangString(groupId, "NotEnoughResources"));
+                cities[playerId].chat.AddReply(ReplyType.status, GetLangString(groupId, "NotEnoughResources"));
 				return false;
 			}
 			else // currentResource is enough, deduct resourceCost from currentResource
@@ -961,8 +940,7 @@ namespace NemesesGame
         }
 
         #endregion
-
-
+        
         public string GetLangString(long chatId, string key, params object[] args)
         {
             return Program.GetLangString(chatId, key, args);
@@ -973,7 +951,7 @@ namespace NemesesGame
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        async Task BotReply(long groupId,/* IReplyMarkup replyMarkup = null, */ParseMode _parseMode = ParseMode.Markdown)
+        async Task BotReply(/* IReplyMarkup replyMarkup = null, */ParseMode _parseMode = ParseMode.Markdown)
 		{
             string replyString = botReply;
 

@@ -9,17 +9,23 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NemesesGame
 {
+    public enum ReplyType { status, command, general }
+
     public class CityChatHandler
     {
-        public string privateReply = "";
+        public string statusString = "";
+        public string cmdString = "";
+        public string generalString = "";
         public List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
         public InlineKeyboardMarkup menu;
 
         public long playerId;
-        public int msgId = 0;
+        public int statusMsgId = 0;
+        public int cmdMsgId = 0;
         
+        public Stack<string> statusReplyHistory = new Stack<string>(10);
+        public Stack<string> cmdReplyHistory = new Stack<string>(10);
         public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
-        public Stack<string> replyHistory = new Stack<string>(10);
         public int backCount = 0;
 
         public CityChatHandler(long _playerId)
@@ -70,47 +76,98 @@ namespace NemesesGame
         /// <param name="reply">Reply string to save</param>
         public void AddReplyHistory()
         {
+            statusReplyHistory.Push(statusString);
+            cmdReplyHistory.Push(cmdString);
             menuHistory.Push(menu);
-            replyHistory.Push(privateReply);
 
             backCount = menuHistory.Count;
         }
 
         public void ClearReplyHistory()
         {
+            statusReplyHistory.Clear();
+            cmdReplyHistory.Clear();
             menuHistory.Clear();
-            replyHistory.Clear();
         }
-        public void AddReply(string replyString)
+        public void AddReply(ReplyType rType, string replyString)
         {
-            privateReply += replyString;
+            if (rType == ReplyType.command)
+            {
+                cmdString += replyString;
+            }
+            else if (rType == ReplyType.status)
+            {
+                statusString += replyString;
+            }
+            else
+            {
+                generalString += replyString;
+            }
         }
 
         public async Task SendReply(ParseMode _parseMode = ParseMode.Markdown)
         {
-            string replyString = privateReply;
-
-            privateReply = "";
-            if (buttons != null && menu != null)
+            if (statusString != "" && cmdString != "")
             {
-                await Program.SendMessage(playerId, replyString, menu, _parseMode);
+                // send the reply
+                string statusReplyString = statusString;
+                string cmdReplyString = cmdString;
+
+                // clear the strings
+                statusString = "";
+                cmdString = "";
+
+                // try to get the msgId
+                if (statusMsgId == 0 && cmdMsgId == 0)
+                {
+                    //send the status first, then the command... also get the MsgId here
+                    Message statusMsg =
+                        await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
+                    Message cmdMsg =
+                        await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
+
+                    // set the msgId
+                    statusMsgId = statusMsg.MessageId;
+                    cmdMsgId = cmdMsg.MessageId;
+                }
+                else // we don't need to get the msgId...
+                {
+                    await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
+                    await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
+                }
+
 
                 buttons.Clear();
                 menu = null;
             }
-            else
+
+            if (generalString != "")
             {
+                // I think we dont need to get msgId here...
+                string replyString = generalString;
+                generalString = "";
+
                 await Program.SendMessage(playerId, replyString, _parseMode: _parseMode);
             }
         }
 
         public async Task EditMessage(IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
         {
-            string replyString = privateReply;
+            if (statusString != "")
+            {
+                string statusReplyString = statusString;
+                statusString = "";
 
-            privateReply = "";
-            await Program.EditMessage(playerId, msgId, replyString, repMarkup: menu, _parseMode: ParseMode);
-            replyString = "";
+                await Program.EditMessage(playerId, statusMsgId, statusReplyString, _parseMode: ParseMode);
+            }
+
+            //if (cmdString != "")
+            //{
+                string cmdReplyString = cmdString;
+                cmdString = "";
+
+                await Program.EditMessage(playerId, cmdMsgId, cmdReplyString, repMarkup: menu, _parseMode: ParseMode);
+            //}
 
             if (buttons != null)
             {

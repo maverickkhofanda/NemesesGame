@@ -191,13 +191,18 @@ namespace NemesesGame
             }
         }
 
-		public static async Task SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
+		public static async Task<Message> SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
 		{
-            byte count = 0;
+            //byte count = 0;
+            Message message = await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
+
+            Console.WriteLine("Reply to " + message.Chat.Id + " has been sent! (msgId: " + message.MessageId);
+
+            return message;
+            /*
             try
             {
-                await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
-                Console.WriteLine("Reply to " + chatId + " has been sent!");
+                
             }
             catch (Telegram.Bot.Exceptions.ApiRequestException e)
             {
@@ -216,6 +221,7 @@ namespace NemesesGame
                     
                 }
             }
+            */
         }
 
         public static async Task EditMessage(long chatId, int msgId, string messageContent, IReplyMarkup repMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
