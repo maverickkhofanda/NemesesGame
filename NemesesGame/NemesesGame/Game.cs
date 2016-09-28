@@ -27,6 +27,7 @@ namespace NemesesGame
         //InlineKeyboardMarkup menu;
 
         public Dictionary<long, City> cities = new Dictionary<long, City>();
+        MerchantGlobal merchantGlobal;
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
 		public GameStatus gameStatus = GameStatus.Unhosted;
@@ -42,6 +43,7 @@ namespace NemesesGame
             groupId = ChatId;
             chatName = ChatName;
 			gameStatus = GameStatus.Hosted;
+            merchantGlobal = new MerchantGlobal((byte) cities.Count);
         }
 
         public async Task StartGame()
@@ -97,6 +99,7 @@ namespace NemesesGame
 
                 // turn actions
                 ResourceRegen();
+                //UpdateDemandSupply();
                 //March();
                 
                 await MainMenu();
@@ -557,6 +560,140 @@ namespace NemesesGame
                 defChat.AddReply(ReplyType.status,
                     GetLangString(groupId, "DefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
             }
+        }
+
+        #endregion
+
+        #region Merchant Actions
+
+        void MerchantBuy(long playerId, ResourceType rType, int amountOrdered)
+        {
+            MerchantGlobal mg = merchantGlobal;
+
+            // check if got enough money
+            int goldCost = amountOrdered * mg.BuyPrice[rType];
+            Resources cost = new Resources(goldCost, 0, 0, 0);
+
+            if (PayCost(ref cities[playerId]._resources, cost, playerId))
+            {
+                // add city's CurrentResources
+                cities[playerId]._resources.Add(rType, amountOrdered);
+
+                // add MerchantGlobal.ThisTurnDemand
+                mg.ThisTurnDemand[rType] += amountOrdered;
+            }
+        }
+
+        // MerchantSell() waits MerchantBuy() test
+        // void MerchantSell() { }
+
+        void UpdateDemandSupply()
+        {
+            MerchantGlobal mg = merchantGlobal;
+            ResourceType[] mtrlType = { ResourceType.Wood, ResourceType.Stone, ResourceType.Mithril };
+
+            // Denominator setter
+            foreach(ResourceType r in mtrlType)
+            {
+                // Denominator setter
+                // sets the first denominator
+                if (mg.Denominator[r] == 0)
+                {
+                    // check if supply/demand still 0
+                    if (mg.ThisTurnDemand[r] == 0 && mg.ThisTurnSupply[r] == 0) { }
+
+                    // find the highest number... between supply / demand
+                    else if (mg.ThisTurnDemand[r] == 0)
+                    {
+                        mg.Denominator[r] = mg.ThisTurnSupply[r];
+                    }
+                    else if (mg.ThisTurnSupply[r] == 0)
+                    {
+                        mg.Denominator[r] = mg.ThisTurnDemand[r];
+                    }
+                    else
+                    {
+                        mg.Denominator[r] = mg.ThisTurnDemand[r] >= mg.ThisTurnSupply[r] ?
+                            mg.ThisTurnDemand[r] :
+                            mg.ThisTurnSupply[r];
+                    }
+                }
+                // sets the next denominators
+                else
+                {
+                    // keep the denominator if no transaction
+                    if (mg.ThisTurnDemand[r] == 0 && mg.ThisTurnSupply[r] == 0) { }
+                    else if (mg.ThisTurnDemand[r] == 0)
+                    {
+                        mg.Denominator[r] = (mg.ThisTurnSupply[r] + (mg.AvgWeightConst * mg.Denominator[r]))
+                                            / (1 + mg.AvgWeightConst);
+                    }
+                    else if (mg.ThisTurnSupply[r] == 0)
+                    {
+                        mg.Denominator[r] = (mg.ThisTurnDemand[r] + (mg.AvgWeightConst * mg.Denominator[r]))
+                                            / (1 + mg.AvgWeightConst);
+                    }
+                    else
+                    {
+                        float f = mg.ThisTurnDemand[r] >= mg.ThisTurnSupply[r] ?
+                            mg.ThisTurnSupply[r] :
+                            mg.ThisTurnSupply[r];
+
+                        mg.Denominator[r] = (f + (mg.AvgWeightConst * mg.Denominator[r]))
+                                            / (1 + mg.AvgWeightConst);
+                    }
+                }
+
+                // DemandSupplyPercentage (DemSupMult) setter
+                mg.DemSupMult[r] = ((mg.ThisTurnDemand[r] - mg.ThisTurnSupply[r]) / mg.Denominator[r])
+                                + (mg.DemSupMult[r] * mg.AvgWeightConst);
+
+                // MidPrice setter
+                mg.MidPrice[r] = mg.BasePrice[r] + (mg.DemSupMult[r] * mg.PriceSpread[r]);
+
+                //BuyPrice & SellPrice setter
+                mg.BuyPrice[r] = (int)Math.Round(mg.MidPrice[r] + mg.BuySellSpread[r]);
+                mg.SellPrice[r] = (int)Math.Round(mg.MidPrice[r] - mg.BuySellSpread[r]);
+
+                Console.WriteLine("Price {0}: {1} | {2}", Enum.GetName(typeof(ResourceType), r), mg.BuyPrice[r], mg.SellPrice[r]);
+            }
+
+            /* Unused code...
+            if (turn == 2)
+            {
+                foreach (ResourceType r in mtrlType)
+                {
+                    //mg.Demand[r] = mg.ThisTurnDemand[r];
+                    //mg.Supply[r] = mg.ThisTurnSupply[r];
+                }
+            }
+            else
+            {
+                foreach (ResourceType r in mtrlType)
+                {
+                    //mg.Demand[r] = (mg.ThisTurnDemand[r] + (mg.AvgWeightConst * mg.Demand[r])) / (1 + mg.AvgWeightConst);
+                    //mg.Supply[r] = (mg.ThisTurnSupply[r] + (mg.AvgWeightConst * mg.Supply[r])) / (1 + mg.AvgWeightConst);
+                }
+            }
+            
+            foreach (ResourceType r in mtrlType)
+            {
+                // if Demand is higher, the Pct is +... and vice versa
+                mg.DemSupMult[r] = mg.Demand[r] >= mg.SupplyMA[r] ?
+                    (mg.Demand[r] - mg.SupplyMA[r]) / mg.Demand[r] :
+                    (mg.Demand[r] - mg.SupplyMA[r]) / mg.SupplyMA[r];
+            }
+            */
+
+            // resets thisTurnDemand/Supply
+            foreach (ResourceType r in mtrlType)
+            {
+                mg.ThisTurnDemand[r] = 0;
+                mg.ThisTurnSupply[r] = 0;
+            }
+
+
+            
         }
 
         #endregion
