@@ -48,8 +48,8 @@
 		"PlayerListHeader" : "Players in game:\r\n",
 		"ChooseOtherPlayer" : "Which state do you choose?",
 		"MainMenu" : [
-			"\r\n\r\nWhat wilt thou do milord?",
-			"\r\n\r\nPlease assign your servants jobs to do"
+			"What wilt thou do milord?",
+			"Please assign your servants jobs to do"
 			],
 
 		"---Sub-REGION : In-game Headers: Resources ---" : "",
