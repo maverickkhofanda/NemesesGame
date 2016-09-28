@@ -43,22 +43,22 @@ namespace NemesesGame
         Merchant[] merchants;
         ResourceType[] materialTypes = { ResourceType.Wood, ResourceType.Stone, ResourceType.Mithril };
 
-        Dictionary<ResourceType, int> buyPrice;
-        Dictionary<ResourceType, int> sellPrice;
-        Dictionary<ResourceType, float> midPrice;
+        Dictionary<ResourceType, int> buyPrice = new Dictionary<ResourceType, int>();
+        Dictionary<ResourceType, int> sellPrice = new Dictionary<ResourceType, int>();
+        Dictionary<ResourceType, float> midPrice = new Dictionary<ResourceType, float>();
 
         // reference
-        Dictionary<ResourceType, int> basePrice;
-        Dictionary<ResourceType, int> priceSpread;
-        Dictionary<ResourceType, float> buySellSpread;
+        Dictionary<ResourceType, int> basePrice = new Dictionary<ResourceType, int>();
+        Dictionary<ResourceType, int> priceSpread = new Dictionary<ResourceType, int>();
+        Dictionary<ResourceType, float> buySellSpread = new Dictionary<ResourceType, float>();
 
         // this turn Demand/Supply
-        Dictionary<ResourceType, int> thisTurnDemand;
-        Dictionary<ResourceType, int> thisTurnSupply;
+        Dictionary<ResourceType, int> thisTurnDemand = new Dictionary<ResourceType, int>();
+        Dictionary<ResourceType, int> thisTurnSupply = new Dictionary<ResourceType, int>();
 
         // demand-supply-const
-        Dictionary<ResourceType, float> denominator;
-        Dictionary<ResourceType, float> demSupMult;
+        Dictionary<ResourceType, float> denominator = new Dictionary<ResourceType, float>();
+        Dictionary<ResourceType, float> demSupMult = new Dictionary<ResourceType, float>();
         //Dictionary<ResourceType, float> demandMA;
         //Dictionary<ResourceType, float> supplyMA;
         float avgWeightConst;
@@ -78,7 +78,7 @@ namespace NemesesGame
         public Dictionary<ResourceType, float> DemSupMult { get { return demSupMult; } set { demSupMult = value; } }
         //public Dictionary<ResourceType, float> DemandMA { get { return demandMA; } set { demandMA = value; } }
         //public Dictionary<ResourceType, float> SupplyMA { get { return supplyMA; } set { supplyMA = value; } }
-        public float AvgWeightConst { get; set; }
+        public float AvgWeightConst { get { return avgWeightConst; } set { avgWeightConst = value; } }
 
         void InitMisc()
         {
