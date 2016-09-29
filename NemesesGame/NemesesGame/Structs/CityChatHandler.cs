@@ -16,16 +16,19 @@ namespace NemesesGame
         public string statusString = "";
         public string cmdString = "";
         public string generalString = "";
+		public string messageString = "";
         public List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
         public InlineKeyboardMarkup menu;
 
         public long playerId;
         public int statusMsgId = 0;
         public int cmdMsgId = 0;
+		public int messageId = 0;
         
         public Stack<string> statusReplyHistory = new Stack<string>(10);
         public Stack<string> cmdReplyHistory = new Stack<string>(10);
-        public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
+		public Stack<string> messageReplyHistory = new Stack<string>(10);
+		public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
         public int backCount = 0;
 
         public CityChatHandler(long _playerId)
@@ -78,7 +81,8 @@ namespace NemesesGame
         {
             statusReplyHistory.Push(statusString);
             cmdReplyHistory.Push(cmdString);
-            menuHistory.Push(menu);
+			messageReplyHistory.Push(cmdString);
+			menuHistory.Push(menu);
 
             backCount = menuHistory.Count;
         }
@@ -87,6 +91,7 @@ namespace NemesesGame
         {
             statusReplyHistory.Clear();
             cmdReplyHistory.Clear();
+			messageReplyHistory.Clear();
             menuHistory.Clear();
         }
         public void AddReply(ReplyType rType, string replyString)
@@ -94,15 +99,18 @@ namespace NemesesGame
             if (rType == ReplyType.command)
             {
                 cmdString += replyString;
+				//Console.WriteLine("Current command string : {0}", cmdString);
             }
             else if (rType == ReplyType.status)
             {
                 statusString += replyString;
-            }
+				//Console.WriteLine("Current status string : {0}", statusString);
+			}
             else
             {
                 generalString += replyString;
-            }
+				//Console.WriteLine("Current general string : {0}", generalString);
+			}
         }
 
         public async Task SendReply(ParseMode _parseMode = ParseMode.Markdown)
@@ -112,29 +120,39 @@ namespace NemesesGame
                 // send the reply
                 string statusReplyString = statusString;
                 string cmdReplyString = cmdString;
+				string messageReplyString =
+					statusReplyString +
+					"\r\n--------------\r\n" +
+					cmdReplyString;
+				messageString = messageReplyString;
 
                 // clear the strings
-                statusString = "";
-                cmdString = "";
+                //statusString = "";
+                //cmdString = "";
 
                 // try to get the msgId
-                if (statusMsgId == 0 && cmdMsgId == 0)
+                if (/*statusMsgId == 0 && cmdMsgId == 0*/ messageId == 0)
                 {
                     //send the status first, then the command... also get the MsgId here
-                    Message statusMsg =
-                        await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
-                    Message cmdMsg =
-                        await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
+                    //Message statusMsg =
+                    //    await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
+                    //Message cmdMsg =
+                    //    await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
+					Message messageReply =
+						await Program.SendMessage(playerId, messageReplyString, menu, _parseMode);
 
-                    // set the msgId
-                    statusMsgId = statusMsg.MessageId;
-                    cmdMsgId = cmdMsg.MessageId;
+
+					// set the msgId
+					//statusMsgId = statusMsg.MessageId;
+					//cmdMsgId = cmdMsg.MessageId;
+					messageId = messageReply.MessageId;
                 }
                 else // we don't need to get the msgId...
                 {
-                    await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
-                    await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
-                }
+					//await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
+					//await Program.SendMessage(playerId, cmdReplyString, menu, _parseMode);
+					await Program.SendMessage(playerId, messageReplyString, menu, _parseMode);
+				}
 
 
                 buttons.Clear();
@@ -151,8 +169,44 @@ namespace NemesesGame
             }
         }
 
-        public async Task EditMessage(IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
+		public void EditReply(ReplyType rType, string replyString)
+		{
+			if (rType == ReplyType.command)
+			{
+				cmdString = replyString;
+				//Console.WriteLine("Command edited to : {0}", replyString);
+			}
+			else if (rType == ReplyType.status)
+			{
+				statusString = replyString;
+				//Console.WriteLine("Status edited to : {0}", replyString);
+			}
+			else
+			{
+				generalString = replyString;
+				//Console.WriteLine("General edited to : {0}", replyString);
+			}
+		}
+
+		public void ClearReply(ReplyType rType)
+		{
+			if (rType == ReplyType.command)
+			{
+				cmdString = "";
+			}
+			else if (rType == ReplyType.status)
+			{
+				statusString = "";
+			}
+			else
+			{
+				generalString = "";
+			}
+		}
+
+		public async Task EditMessage(IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown)
         {
+			/*
             if (statusString != "")
             {
                 string statusReplyString = statusString;
@@ -168,6 +222,17 @@ namespace NemesesGame
 
                 await Program.EditMessage(playerId, cmdMsgId, cmdReplyString, repMarkup: menu, _parseMode: ParseMode);
             //}
+			*/
+			Console.WriteLine("EditMessage Called\r\n");
+			if (messageString != "")
+			{
+				string messageReplyString =
+					statusString +
+					"\r\n-------------------\r\n\r\n" +
+					cmdString;
+
+				await Program.EditMessage(playerId, messageId, messageReplyString, repMarkup: menu, _parseMode: ParseMode);
+			}
 
             if (buttons != null)
             {

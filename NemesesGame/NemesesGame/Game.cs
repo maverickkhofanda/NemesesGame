@@ -94,19 +94,25 @@ namespace NemesesGame
             }
             else
             {
-                // end this turn
-                await TimeUp();
+				// end this turn
+				await TimeUp();
+
+                // Refresh chat
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    CityChatHandler chat = kvp.Value.chat;
+                    chat.ClearReply(ReplyType.status);
+                }
 
                 // turn actions
                 ResourceRegen();
-                //UpdateDemandSupply();
                 //March();
                 
                 await MainMenu();
 
-                // new turn actions
-                // News();
-            }
+				// new turn actions
+				// News();
+			}
 
             botReply += GetLangString(groupId, "NextTurn", turn, turnInterval);
 			await BotReply();
@@ -189,7 +195,10 @@ namespace NemesesGame
             textLevel = curLevel;
             textLevel++;
 
-            if (curLevel + 1 < refResources.UpgradeCost[resourceType].Length)
+			chat.ClearReply(ReplyType.status);
+
+
+			if (curLevel + 1 < refResources.UpgradeCost[resourceType].Length)
             {
                 //Console.WriteLine("newLevel : {0}\r\n", curLevel);
                 if (PayCost(ref cities[playerId]._resources, refResources.UpgradeCost[resourceType][++curLevel], playerId))
@@ -239,10 +248,10 @@ namespace NemesesGame
             CityChatHandler chat = cities[playerId].chat;
             Army army = cities[playerId]._army;
 
-            if (_armyNumber == 0)
+			if (_armyNumber == 0)
             {
                 // ask how many army to raise
-                chat.AddReply(ReplyType.command, GetLangString(groupId, "AskRaiseArmyNumber", army.Cost));
+                chat.EditReply(ReplyType.command, GetLangString(groupId, "AskRaiseArmyNumber", army.Cost));
 
                 //lets give the player options : 100, 200, 300, 400, 500
                 for (int i = 100; i <= 500; i += 100)
@@ -265,7 +274,9 @@ namespace NemesesGame
                 Resources payCost = new Resources(goldCost, 0, 0, 0);
                 Console.WriteLine("goldCost: " + goldCost);
 
-                if (PayCost(ref cities[playerId]._resources, payCost, playerId))
+				chat.ClearReply(ReplyType.status);
+
+				if (PayCost(ref cities[playerId]._resources, payCost, playerId))
                 {
                     army.Fronts[0].Number += _armyNumber;
 
@@ -287,7 +298,7 @@ namespace NemesesGame
             // ask attack which country ---------------------------------------------------
             if (targetId == 0)
             {
-                chat.AddReply(ReplyType.command, GetLangString(groupId, "ChooseOtherPlayer"));
+                chat.EditReply(ReplyType.command, GetLangString(groupId, "ChooseOtherPlayer"));
 
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
@@ -376,7 +387,9 @@ namespace NemesesGame
                     // TODO : Insert news in Group
                     DeployArmy(playerId, targetId, frontId, deployPercent);
 
-                    ArmyStatus(playerId);
+					chat.ClearReply(ReplyType.status);
+
+					ArmyStatus(playerId);
 
                     // Back to main menu
                     await MainMenu(playerId, messageId);
@@ -725,8 +738,8 @@ namespace NemesesGame
                     chat.ClearReplyHistory();
 
                     SetMainMenu(kvp.Key);
-
-                    if (chat.cmdMsgId == 0 && chat.statusMsgId == 0)
+					
+                    if (chat.messageId == 0)
                         await chat.SendReply();
                     else
                         await chat.EditMessage();
@@ -738,7 +751,7 @@ namespace NemesesGame
         void SetMainMenu(long playerId)
         {
             CityChatHandler chat = cities[playerId].chat;
-            chat.AddReply(ReplyType.command, GetLangString(groupId, "MainMenu"));
+            chat.EditReply(ReplyType.command, GetLangString(groupId, "MainMenu"));
 
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
@@ -754,7 +767,7 @@ namespace NemesesGame
             CityChatHandler chat = cities[playerId].chat;
 
             //CityStatus(playerId);
-            chat.AddReply(ReplyType.command, GetLangString(groupId, "AssignTask"));
+            chat.EditReply(ReplyType.command, GetLangString(groupId, "AssignTask"));
 
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "RaiseArmy"), $"RaiseArmy|{groupId}"));
@@ -767,21 +780,23 @@ namespace NemesesGame
 
         public async Task MyStatus(long playerId, int messageId)
         {
+			cities[playerId].chat.ClearReply(ReplyType.status);
+
             CityStatus(playerId);
             ArmyStatus(playerId);
 
-            //SetMainMenu(playerId);
+            SetMainMenu(playerId);
             await cities[playerId].chat.EditMessage();
         }
 
         public async Task UpgradeProduction(long playerId, int messageId)
         {
             CityChatHandler chat = cities[playerId].chat;
-
-            chat.AddReply(ReplyType.command, GetLangString(groupId, "AskUpgradeProductionHeader"));
-
-            // Creating strings for button, with all upgrades & current level
-            string woodString = "";
+			
+            chat.EditReply(ReplyType.command, GetLangString(groupId, "AskUpgradeProductionHeader"));
+			
+			// Creating strings for button, with all upgrades & current level
+			string woodString = "";
             string stoneString = "";
             string mithrilString = "";
             byte currentLvl;
@@ -913,7 +928,7 @@ namespace NemesesGame
                     chat.menu = null;
 
 
-                    chat.AddReply(ReplyType.command, GetLangString(groupId, "TimeUp", turn - 1) 
+                    chat.EditReply(ReplyType.command, GetLangString(groupId, "TimeUp", turn - 1) 
                         + new string ('!', i));
                     await kvp.Value.chat.EditMessage();
                     
