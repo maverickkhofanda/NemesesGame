@@ -95,16 +95,16 @@ namespace NemesesGame
 				// end this turn
 				await TimeUp();
 
-                // turn actions
-                ResourceRegen();
-				//March();
-
 				// Refresh chat
 				foreach (KeyValuePair<long, City> kvp in cities)
 				{
 					CityChatHandler chat = kvp.Value.chat;
 					chat.ClearReply(ReplyType.status);
 				}
+
+				// turn actions
+				ResourceRegen();
+				March();
 
 				await MainMenu();
 				// new turn actions
@@ -154,7 +154,7 @@ namespace NemesesGame
                     {
                         string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
 
-                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmy",
+                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmyBase",
                             "",
                             GetLangString(groupId, armyState),
                             army.Fronts[i].Number));
@@ -164,10 +164,11 @@ namespace NemesesGame
                         string armyState = Enum.GetName(typeof(ArmyState), army.Fronts[i].State);
                         string frontTarget = cities[army.Fronts[i].TargetTelegramId].playerDetails.cityName;
 
-                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmy",
+                        chat.AddReply(ReplyType.status, GetLangString(groupId, "CurrentArmyNotBase",
                             i,
                             GetLangString(groupId, armyState, frontTarget),
-                            army.Fronts[i].Number));
+                            army.Fronts[i].Number,
+							army.Fronts[i].MarchLeft));
                     }
                 }
                 else
@@ -386,7 +387,7 @@ namespace NemesesGame
 
 					chat.ClearReply(ReplyType.status);
 
-					ArmyStatus(playerId);
+					//ArmyStatus(playerId);
 
                     // Back to main menu
                     await MainMenu(playerId, messageId);
@@ -396,7 +397,7 @@ namespace NemesesGame
 
             // ask how many troops to deploy
         }
-
+		
         void DeployArmy(long playerId, long targetId, byte targetFrontId, int deployPercent)
         {
             Army army = cities[playerId]._army;
@@ -462,9 +463,10 @@ namespace NemesesGame
                     if (kvp.Value._army.Fronts[i] != null)
                     {
                         ArmyFront front = kvp.Value._army.Fronts[i];
+						ArmyFront[] fronts = kvp.Value._army.Fronts;
 
-                        // if march = 0 (aka. reached the destination), do the thing
-                        if (front.State == ArmyState.March)
+						// if march = 0 (aka. reached the destination), do the thing
+						if (front.State == ArmyState.March)
                         {
                             front.MarchLeft--;
 
@@ -480,6 +482,18 @@ namespace NemesesGame
                                 {
                                     // Intercept(); //not implemented yet
                                 }
+
+								// Resolve
+								// If there is army left, send it back to base
+								if (front.Number > 0)
+								{
+									ArmyFront frontBase = kvp.Value._army.Fronts[0];
+
+									frontBase.Number += front.Number;
+								}
+
+								// Remove current front
+								fronts[i] = null;
                             }
                         }
                     }
@@ -499,19 +513,21 @@ namespace NemesesGame
             float defaultBase = 0.35f;
             float widthOffset = 0.25f;
 
-            int atkCP = offFront.CombatPower;
-            int defCP = defFront.CombatPower;
-            int atkNumber = offFront.Number;
-            int defNumber = defFront.Number;
+            float atkCP = offFront.CombatPower;
+            float defCP = defFront.CombatPower;
+            float atkNumber = offFront.Number;
+            float defNumber = defFront.Number;
 
             // let's give 'outcome' a max number of 100% (or 1)
             float outcome = atkCP >= defCP ?
                 (atkCP - defCP) / atkCP :
                 - ((defCP - atkCP) / defCP); // if 'defCP' is higher, make it minus
 
+			Console.WriteLine("{0}", outcome);
+
             // let's do linear...
-            float atkCasualtyPct = defaultBase + (widthOffset * outcome);
-            float defCasualtyPct = defaultBase - (widthOffset * outcome);
+            float atkCasualtyPct = defaultBase - (widthOffset * outcome);
+            float defCasualtyPct = defaultBase + (widthOffset * outcome);
 
             /* wrong desired graph
             float atkCasualtyPct = defaultBase + ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
@@ -521,10 +537,13 @@ namespace NemesesGame
             Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
             Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
 
-            int atkCasualty = atkNumber * (int)atkCasualtyPct;
-            int defCasualty = defNumber * (int)defCasualtyPct;
+            float atkCasualtyTemp = atkNumber * atkCasualtyPct;
+            float defCasualtyTemp = defNumber * defCasualtyPct;
 
-            offFront.Number -= atkCasualty;
+			int atkCasualty = (int)atkCasualtyTemp;
+			int defCasualty = (int)defCasualtyTemp;
+
+			offFront.Number -= atkCasualty;
             defFront.Number -= defCasualty;
 
             // now, we send the outcomes news...
@@ -543,21 +562,21 @@ namespace NemesesGame
 
                 // chat details to players
                 atkChat.AddReply(ReplyType.status, 
-                    GetLangString(groupId, "InvaderWinPrivate", defPD.cityName, outcome * 100, atkCasualty, offFront.Number));
+                    GetLangString(groupId, "InvaderWinPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
                 defChat.AddReply(ReplyType.status,
-                    GetLangString(groupId, "DefenderLosePrivate", atkPD.cityName, outcome * -100, defCasualty, defFront.Number));
+                    GetLangString(groupId, "DefenderLosePrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
 
             }
-            else if (outcome < 0.1 )
+            else if (outcome < -0.1 )
             {
                 // defender win
                 botReply += GetLangString(groupId, "DefenderWinBroadcast", defPD.cityName, atkPD.cityName);
 
                 // chat details to players
                 atkChat.AddReply(ReplyType.status,
-                    GetLangString(groupId, "InvaderLostPrivate", defPD.cityName, outcome * 100, atkCasualty, offFront.Number));
+                    GetLangString(groupId, "InvaderLostPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
                 defChat.AddReply(ReplyType.status,
-                    GetLangString(groupId, "DefenderWinPrivate", atkPD.cityName, outcome * -100, defCasualty, defFront.Number));
+                    GetLangString(groupId, "DefenderWinPrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
             }
             else
             {
@@ -646,7 +665,7 @@ namespace NemesesGame
 			cities[playerId].chat.ClearReply(ReplyType.status);
 
             CityStatus(playerId);
-            ArmyStatus(playerId);
+            //ArmyStatus(playerId);
 
             SetMainMenu(playerId);
             await cities[playerId].chat.EditMessage();
@@ -883,7 +902,7 @@ namespace NemesesGame
 				cities.Remove(telegramId);
 				playerCount--;
 
-                botReply += GetLangString(groupId, "LeaveGame");
+                botReply += GetLangString(groupId, "LeaveGame", firstName, lastName);
 				await BotReply();
 			}
 			else
