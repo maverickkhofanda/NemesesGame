@@ -65,6 +65,8 @@
     <Compile Include="RefResources.cs" />
     <Compile Include="Structs\ArmyFront.cs" />
     <Compile Include="Structs\CityChatHandler.cs" />
+    <Compile Include="Structs\Merchant.cs" />
+    <Compile Include="Structs\MerchantGlobal.cs" />
     <Compile Include="Structs\PlayerDetails.cs" />
     <Compile Include="Structs\Resources.cs" />
   </ItemGroup>

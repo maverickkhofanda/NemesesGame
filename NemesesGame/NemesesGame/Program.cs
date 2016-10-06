@@ -13,16 +13,19 @@ using System.Reflection;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace NemesesGame
 {
-    class Program
+    static class Program
     {
         public static GamesHandler gamesHandler;
 
         public static Dictionary<long, string> groupLangPref = new Dictionary<long, string>(); // dunno how to save this yet... unimplemented yet
         public static Dictionary<string, JObject> langFiles = new Dictionary<string, JObject>();
         static string languageDirectory = Path.GetFullPath(Path.Combine(Program.rootDirectory, @"..\Language"));
+
+        public static Dictionary<int, Stopwatch> timers = new Dictionary<int, Stopwatch>();
 
         public static string rootDirectory
         {
@@ -61,6 +64,15 @@ namespace NemesesGame
 
         private static async void BotOnCallbackQueryReceived(object sender, CallbackQueryEventArgs callbackQueryEventArgs)
         {
+            int msgId = callbackQueryEventArgs.CallbackQuery.Message.MessageId;
+
+            try
+            {
+                timers.Add(msgId, new Stopwatch());
+                timers[msgId].Start();
+            }
+            catch (ArgumentException) { }
+
             var callbackQuery = callbackQueryEventArgs.CallbackQuery;
             var senderId = callbackQuery.From.Id;
 
@@ -68,7 +80,7 @@ namespace NemesesGame
             {
                await gamesHandler.CallbackQueryHandler(callbackQuery);
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException)
             {
                 string reply = GetLangString(0, "NotJoinedGame");
                 //Console.WriteLine(e);
@@ -80,29 +92,80 @@ namespace NemesesGame
         private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
             var message = messageEventArgs.Message;
+            
+            // start stopwatch
+            Console.WriteLine("\nMsg {0} received from user {1} in chat {2}",
+                message.MessageId,
+                message.From.FirstName,
+                message.Chat.Id);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             var chatId = message.Chat.Id;
-            string entityType = "";
+            MessageEntityType msgEntityType = MessageEntityType.Bold;
 
-            try
+            // only get TextLink if it's in reply
+            // we use TextLink for saving parameters
+            if (message.ReplyToMessage != null)
             {
-                entityType = message.Entities.ElementAt(0).Type.ToString();
-            } catch { }
-
-            // BotCommandHandler
-            if (message.Text != null && entityType == "BotCommand")
+                foreach (MessageEntity msgEnt in message.ReplyToMessage.Entities)
+                {
+                    if (msgEnt.Type == MessageEntityType.TextLink)
+                    {
+                        msgEntityType = msgEnt.Type;
+                        break;
+                    }
+                }
+            }
+            else
             {
                 try
                 {
-                    await gamesHandler.CommandHandler(message); ;
+                    // find the command or textLink
+                    foreach (MessageEntity msgEnt in message.Entities)
+                    {
+                        if (msgEnt.Type == MessageEntityType.BotCommand || msgEnt.Type == MessageEntityType.TextLink)
+                        {
+                            msgEntityType = msgEnt.Type;
+                            break;
+                        }
+                    }
                 }
-                catch (KeyNotFoundException)
-                {
-                    string reply = GetLangString(0, "NotJoinedGame");
-                    await SendMessage(chatId, reply);
-                }
+                catch { }
             }
+
+            // BotCommandHandler
+            if (message.Text != null && (msgEntityType == MessageEntityType.BotCommand || msgEntityType == MessageEntityType.TextLink))
+            {
+                if (msgEntityType == MessageEntityType.BotCommand)
+                {
+                    try
+                    {
+                        await gamesHandler.CommandHandler(message);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        string reply = GetLangString(0, "NotJoinedGame");
+                        await SendMessage(chatId, reply);
+                    }
+                }
+                else if (msgEntityType == MessageEntityType.TextLink)
+                {
+                    await gamesHandler.ReplyMsgHandler(message);
+                }
+                
+            }
+            //else if(message.Text != null && msgEntity.Type == MessageEntityType.TextLink)
+            //{
+
+            //    Console.WriteLine("Received TextLink from reply!");
+            //    await gamesHandler.ReplyMsgHandler(message);
+            //}
+
+            sw.Stop();
+            Console.WriteLine("Msg {0} processed in {1} ms", message.MessageId, sw.ElapsedMilliseconds);
         }
+
         #region Messaging
         public static void LoadLanguage()
         {
@@ -182,7 +245,7 @@ namespace NemesesGame
                     output = "Hmm... something went wrong in the game... please contact the dev (@greyfader or @leecopper15)\n\rThanks";
                     throw new Exception($"Error getting string {key} with parameters {args.Aggregate((a, b) => a + "," + b.ToString())}");
 
-                    return output;
+                    //return output;
                 }
             }
             catch (Exception e)
@@ -191,7 +254,7 @@ namespace NemesesGame
             }
         }
 
-		public static async Task<Message> SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup=null, ParseMode _parseMode = ParseMode.Markdown)
+        public static async Task<Message> SendMessage(long chatId, string messageContent, IReplyMarkup repMarkup = null, ParseMode _parseMode = ParseMode.Markdown)
 		{
             //byte count = 0;
             Message message = await Bot.SendTextMessageAsync(chatId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
@@ -230,9 +293,22 @@ namespace NemesesGame
             try
             {
                 await Bot.EditMessageTextAsync(chatId, msgId, messageContent, replyMarkup: repMarkup, parseMode: _parseMode);
-                Console.WriteLine("Message editted at {0} (msgId: {1})", chatId, msgId);
+
+                object elapsed;
+
+                try
+                {
+                    // stop stopwatch
+                    timers[msgId].Stop();
+                    elapsed = timers[msgId].ElapsedMilliseconds;
+                    timers.Remove(msgId);
+                } catch (KeyNotFoundException)
+                {
+                    elapsed = "???";
+                }
+                Console.WriteLine("Msg {1} at {0} processed in {2} ms", chatId, msgId, elapsed);
             }
-            catch (Telegram.Bot.Exceptions.ApiRequestException e)
+            catch (Telegram.Bot.Exceptions.ApiRequestException)
             {
                 count++;
                 if (count <= 10)
@@ -269,6 +345,25 @@ namespace NemesesGame
             }
 
             return newIndicesArray;
+        }
+
+        public static void Shuffle<T>(this Random rng, T[] array)
+        {
+            int n = array.Length;
+            while (n > 1)
+            {
+                int k = rng.Next(n--);
+                T temp = array[n];
+                array[n] = array[k];
+                array[k] = temp;
+            }
+        }
+
+        public static string UppercaseFirst(string s)
+        {
+            char[] zero = s.ToCharArray(0, 1);
+            zero[0] = char.ToUpperInvariant(zero[0]);
+            return new string(zero) + s.Substring(1);
         }
 
         public static string gameInfo =
