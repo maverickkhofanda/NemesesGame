@@ -58,20 +58,33 @@
 			"AskUpgradeProductionHeader" : "Which resource production you want to upgrade?\r\n",
 
 		"---Sub-REGION : In-game Headers: Army ---" : "",
-			"InvaderWinBroadcast" : "*{0}* has won the Invasion of *{1}*!",
-			"DefenderWinBroadcast" : "*{0}* has won the Defense of *{0}* against *{1}*!",
-			"InvadeTieBroadcast" : "The Invasion of *{0}* ended in stalemate! *{1}* must go home with nothing...",
+			"InvaderWinBroadcast" : "*{0}* has won the Invasion of *{1}*!\r\n",
+			"DefenderWinBroadcast" : "*{0}* has won the Defense of *{0}* against *{1}*!\r\n",
+			"InvadeTieBroadcast" : "The Invasion of *{0}* ended in stalemate! *{1}* must go home with nothing...\r\n",
 
-			"InvaderWinPrivate" : "You've *won* the Invasion of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)",
-			"InvaderLostPrivate" : "You've *lost* the Invasion of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)",
-			"InvaderTiePrivate" : "Your invasion against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)",
+			"InvaderWinPrivate" : "You've *won* the Invasion of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InvaderLostPrivate" : "You've *lost* the Invasion of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InvaderTiePrivate" : "Your invasion against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)\r\n",
+			"InvaderInterceptedPrivate" : "No army to Invade! Your army has been completely Intercepted!\r\n",
 
-			"DefenderWinPrivate" : "You've *won* the Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)",
-			"DefenderLosePrivate" : "You've *lost* the Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)",
-			"DefenderTiePrivate" : "Your defense against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)",
+			"DefenderWinPrivate" : "You've *won* the Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"DefenderLosePrivate" : "You've *lost* the Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"DefenderTiePrivate" : "Your defense against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)\r\n",
 
-			"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)",
-			"AskRaiseArmyNumber" : "How many men do you want to muster? (Cost: *{0}*💰 / man)",
+			"InterceptWinBroadcast" : "*{0}* has won the Intercept of *{1}*!\r\n",
+			"InterceptDefenderWinBroadcast" : "*{0}* has won the Intercept Defense of *{0}* against *{1}*!\r\n",
+			"InterceptTieBroadcast" : "The Intercept of *{0}* ended in stalemate! *{1}* must go home with nothing...\r\n",
+
+			"InterceptWinPrivate" : "You've *won* the Intercept of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InterceptLostPrivate" : "You've *lost* the Intercept of *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InterceptTiePrivate" : "Your intercept against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)\r\n",
+
+			"InterceptDefenderWinPrivate" : "You've *won* the Intercept Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InterceptDefenderLosePrivate" : "You've *lost* the Intercept Defense against *{0}* by *{1}*%!\n\rYour casualty is *{2}*🗡 (*{3}*🗡 left)\r\n",
+			"InterceptDefenderTiePrivate" : "Your intercept defense against *{0}* has ended in a *stalemate*!\n\rYour casualty is *{1}*🗡 (*{2}*🗡 left)\r\n",
+
+			"AskRaiseArmyType" : "Which army type do you want to raise?\r\n(insert army explaination here...)\r\n",
+			"AskRaiseArmyNumber" : "How many men do you want to muster? (Cost: *{0}*💰 / man)\r\n",
 			"DeployTroopNumber" : "How many troops do you want to unleash? (% of *defending* troops)\r\n",
 
 			"RaiseArmySuccess" : "You've just raised *{0}* troops!\r\n",
@@ -89,8 +102,9 @@
 			"\r\n*{0}*'s current resources:\n\rGold💰: *{1}* + {2}/turn\n\rWood🌲: *{3}* + {4}/turn\n\rStone🗿: *{5}* + {6}/turn\n\rMithril💎: *{7}* + {8}/turn\n\r"
 			],
 		"CurrentArmyHeader" : "\r\nArmy current status:\r\n",
-		"CurrentArmy" : "Front *{0}* *{1}*: *{2}* 🗡\r\n",
-		"CurrentDefendingArmy" : "\r\nArmy in base: *{0}* troops🗡",
+		"CurrentArmyBase" : "Front *{0}* *{1}*: *{2}* 🗡\r\n",
+		"CurrentArmyNotBase" : "Front *{0}* *{1}*: *{2}* (arrive in *{3}* turns)\r\n",
+		"CurrentDefendingArmy" : "Army in base: *{0}* troops🗡\r\n",
 		"TimeUp" : "Time's up for turn {0}",
 
 		"---REGION : Buttons---" : "",
