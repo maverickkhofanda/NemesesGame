@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Timers;
 using NemesesGame;
-using Telegram.Bot.Types;
 
 namespace NemesesGame
 {
@@ -43,7 +43,6 @@ namespace NemesesGame
             groupId = ChatId;
             chatName = ChatName;
 			gameStatus = GameStatus.Hosted;
-            merchantGlobal = new MerchantGlobal((byte) cities.Count);
         }
 
         public async Task StartGame()
@@ -57,7 +56,17 @@ namespace NemesesGame
 				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
 				await BotReply();
 
-				Timer(turnInterval, Turn);
+                // create new list for numbering player for Merchant journey
+                long[] playerIdArray = new long[cities.Count];
+                byte i = 0;
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    playerIdArray[i] = kvp.Key;
+                    i++;
+                }
+                merchantGlobal = new MerchantGlobal(playerIdArray);
+
+                Timer(turnInterval, Turn);
 			}
             else
 			{
@@ -95,17 +104,29 @@ namespace NemesesGame
             else
             {
 				// end this turn
+                // try not using TimeUp()
 				await TimeUp();
 
                 // Refresh chat
                 foreach (KeyValuePair<long, City> kvp in cities)
                 {
+                    // clear everythingggg
                     CityChatHandler chat = kvp.Value.chat;
+
                     chat.ClearReply(ReplyType.status);
+
+                    /*
+                    // moved from TimeUp()
+                    chat.cmdString = "";
+                    chat.buttons.Clear();
+                    chat.menu = null;
+                    // end of moved code
+                    */
                 }
 
                 // turn actions
                 ResourceRegen();
+                merchantGlobal.UpdateDemandSupply();
                 //March();
                 
                 await MainMenu();
@@ -579,12 +600,98 @@ namespace NemesesGame
 
         #region Merchant Actions
 
-        void MerchantBuy(long playerId, ResourceType rType, int amountOrdered)
+        public async Task Merchant(long playerId, int messageId, string action = "", string materialType = "", int amountOrdered = 0)
         {
-            MerchantGlobal mg = merchantGlobal;
+            CityChatHandler chat = cities[playerId].chat;
+            ResourceType[] mtrlType = { ResourceType.Wood, ResourceType.Stone, ResourceType.Mithril };
+
+            if (action == "")
+            {
+                chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantGreeting"));
+
+                // add current price ticker
+                foreach (ResourceType r in mtrlType)
+                {
+                    chat.AddReply(ReplyType.command,
+                        string.Format("*{0}*: *{1}*💰 / *{2}*💰\r\n",
+                            GetLangString(groupId, Enum.GetName(typeof(ResourceType), r)),
+                            merchantGlobal.BuyPrice[r],
+                            merchantGlobal.SellPrice[r])
+                        );
+                }
+
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Buy"), $"Merchant|{groupId}|Buy"));
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Sell"), $"Merchant|{groupId}|Sell"));
+                chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+                chat.SetMenu();
+
+                chat.AddReplyHistory();
+                await chat.EditMessage();
+            }
+            else
+            {
+                if (materialType == "")
+                {
+                    // ask which resource to buy/sell
+                    // current price shown at the menu before
+
+                    chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantAskMaterial"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Wood"), $"Merchant|{groupId}|{action}|Wood"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Stone"), $"Merchant|{groupId}|{action}|Stone"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Mithril"), $"Merchant|{groupId}|{action}|Mithril"));
+                    chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+
+                    chat.SetMenu();
+
+                    chat.AddReplyHistory();
+                    await chat.EditMessage();
+                }
+                else
+                {
+                    // ask the amount ordered
+                    if (amountOrdered == 0)
+                    {
+                        // use ForceReply
+                        ForceReply f = new ForceReply();
+                        f.Force = true;
+
+                        // need to set some parameters to process the player's reply
+                        string rType = materialType.ToLower();
+
+                        chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantAskAmount",
+                            GetLangString(groupId, rType)));
+
+
+                        // put parameters here embedded as url
+                        chat.AddReply(ReplyType.command, $"[?](Merchant.{groupId}.{action}.{materialType})");
+
+                        await chat.EditMessage(forceReply: f);
+                    }/*
+                    else
+                    {
+                        // get the trade run!
+                        ResourceType rType = (ResourceType)Enum.Parse(typeof(ResourceType), materialType);
+
+                        if (action == "Buy")
+                        {
+                            MerchantBuy(playerId, messageId, rType,)
+                        }
+                        else if (action == "Sell")
+                        {
+
+                        }
+                    }*/
+                }
+            }
+        }
+
+        async Task MerchantBuy(long playerId, int messageId, ResourceType rType, int amountOrdered)
+        {
+            //MerchantGlobal mg = merchantGlobal;
+            CityChatHandler chat = cities[playerId].chat;
 
             // check if got enough money
-            int goldCost = amountOrdered * mg.BuyPrice[rType];
+            int goldCost = amountOrdered * merchantGlobal.BuyPrice[rType];
             Resources cost = new Resources(goldCost, 0, 0, 0);
 
             if (PayCost(ref cities[playerId]._resources, cost, playerId))
@@ -593,121 +700,24 @@ namespace NemesesGame
                 cities[playerId]._resources.Add(rType, amountOrdered);
 
                 // add MerchantGlobal.ThisTurnDemand
-                mg.ThisTurnDemand[rType] += amountOrdered;
+                merchantGlobal.ThisTurnDemand[rType] += amountOrdered;
+
+                // show trade successful
+                chat.EditReply(ReplyType.status, GetLangString(groupId, "MerchantTradeSuccess",
+                    amountOrdered,
+                    Enum.GetName(typeof(ResourceType), rType),
+                    merchantGlobal.BuyPrice[rType],
+                    goldCost));
             }
+
+            await MainMenu(playerId, messageId);
+            await chat.EditMessage();
         }
 
         // MerchantSell() waits MerchantBuy() test
         // void MerchantSell() { }
 
-        void UpdateDemandSupply()
-        {
-            MerchantGlobal mg = merchantGlobal;
-            ResourceType[] mtrlType = { ResourceType.Wood, ResourceType.Stone, ResourceType.Mithril };
-
-            // Denominator setter
-            foreach(ResourceType r in mtrlType)
-            {
-                // Denominator setter
-                // sets the first denominator
-                if (mg.Denominator[r] == 0)
-                {
-                    // check if supply/demand still 0
-                    if (mg.ThisTurnDemand[r] == 0 && mg.ThisTurnSupply[r] == 0) { }
-
-                    // find the highest number... between supply / demand
-                    else if (mg.ThisTurnDemand[r] == 0)
-                    {
-                        mg.Denominator[r] = mg.ThisTurnSupply[r];
-                    }
-                    else if (mg.ThisTurnSupply[r] == 0)
-                    {
-                        mg.Denominator[r] = mg.ThisTurnDemand[r];
-                    }
-                    else
-                    {
-                        mg.Denominator[r] = mg.ThisTurnDemand[r] >= mg.ThisTurnSupply[r] ?
-                            mg.ThisTurnDemand[r] :
-                            mg.ThisTurnSupply[r];
-                    }
-                }
-                // sets the next denominators
-                else
-                {
-                    // keep the denominator if no transaction
-                    if (mg.ThisTurnDemand[r] == 0 && mg.ThisTurnSupply[r] == 0) { }
-                    else if (mg.ThisTurnDemand[r] == 0)
-                    {
-                        mg.Denominator[r] = (mg.ThisTurnSupply[r] + (mg.AvgWeightConst * mg.Denominator[r]))
-                                            / (1 + mg.AvgWeightConst);
-                    }
-                    else if (mg.ThisTurnSupply[r] == 0)
-                    {
-                        mg.Denominator[r] = (mg.ThisTurnDemand[r] + (mg.AvgWeightConst * mg.Denominator[r]))
-                                            / (1 + mg.AvgWeightConst);
-                    }
-                    else
-                    {
-                        float f = mg.ThisTurnDemand[r] >= mg.ThisTurnSupply[r] ?
-                            mg.ThisTurnSupply[r] :
-                            mg.ThisTurnSupply[r];
-
-                        mg.Denominator[r] = (f + (mg.AvgWeightConst * mg.Denominator[r]))
-                                            / (1 + mg.AvgWeightConst);
-                    }
-                }
-
-                // DemandSupplyPercentage (DemSupMult) setter
-                mg.DemSupMult[r] = ((mg.ThisTurnDemand[r] - mg.ThisTurnSupply[r]) / mg.Denominator[r])
-                                + (mg.DemSupMult[r] * mg.AvgWeightConst);
-
-                // MidPrice setter
-                mg.MidPrice[r] = mg.BasePrice[r] + (mg.DemSupMult[r] * mg.PriceSpread[r]);
-
-                //BuyPrice & SellPrice setter
-                mg.BuyPrice[r] = (int)Math.Round(mg.MidPrice[r] + mg.BuySellSpread[r]);
-                mg.SellPrice[r] = (int)Math.Round(mg.MidPrice[r] - mg.BuySellSpread[r]);
-
-                Console.WriteLine("Price {0}: {1} | {2}", Enum.GetName(typeof(ResourceType), r), mg.BuyPrice[r], mg.SellPrice[r]);
-            }
-
-            /* Unused code...
-            if (turn == 2)
-            {
-                foreach (ResourceType r in mtrlType)
-                {
-                    //mg.Demand[r] = mg.ThisTurnDemand[r];
-                    //mg.Supply[r] = mg.ThisTurnSupply[r];
-                }
-            }
-            else
-            {
-                foreach (ResourceType r in mtrlType)
-                {
-                    //mg.Demand[r] = (mg.ThisTurnDemand[r] + (mg.AvgWeightConst * mg.Demand[r])) / (1 + mg.AvgWeightConst);
-                    //mg.Supply[r] = (mg.ThisTurnSupply[r] + (mg.AvgWeightConst * mg.Supply[r])) / (1 + mg.AvgWeightConst);
-                }
-            }
-            
-            foreach (ResourceType r in mtrlType)
-            {
-                // if Demand is higher, the Pct is +... and vice versa
-                mg.DemSupMult[r] = mg.Demand[r] >= mg.SupplyMA[r] ?
-                    (mg.Demand[r] - mg.SupplyMA[r]) / mg.Demand[r] :
-                    (mg.Demand[r] - mg.SupplyMA[r]) / mg.SupplyMA[r];
-            }
-            */
-
-            // resets thisTurnDemand/Supply
-            foreach (ResourceType r in mtrlType)
-            {
-                mg.ThisTurnDemand[r] = 0;
-                mg.ThisTurnSupply[r] = 0;
-            }
-
-
-            
-        }
+        
 
         #endregion
 
@@ -756,6 +766,12 @@ namespace NemesesGame
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Attack"), $"Attack|{groupId}"));
+
+            if ((bool) merchantGlobal.IsMerchantInCity[playerId])
+            {
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Merchant"), $"Merchant|{groupId}"));
+            }
+
             // no Back button
             chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
             
@@ -783,7 +799,7 @@ namespace NemesesGame
 			cities[playerId].chat.ClearReply(ReplyType.status);
 
             CityStatus(playerId);
-            ArmyStatus(playerId);
+            //ArmyStatus(playerId);
 
             SetMainMenu(playerId);
             await cities[playerId].chat.EditMessage();
@@ -892,22 +908,33 @@ namespace NemesesGame
         {
             CityChatHandler chat = cities[playerId].chat;
 
-            if (chat.menuHistory.Count == chat.backCount)
+            if (chat.statusReplyHistory.Count != 1)
             {
-                chat.menu = chat.menuHistory.Pop();
-                chat.menu = chat.menuHistory.Pop();
+                //if (chat.menuHistory.Count == chat.backCount)
+                //{
+                    chat.menu = chat.menuHistory.Pop();
+                    chat.menu = chat.menuHistory.Peek();
 
-                chat.statusString = chat.statusReplyHistory.Pop();
-                chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Peek();
 
-                chat.cmdString = chat.cmdReplyHistory.Pop();
-                chat.cmdString = chat.cmdReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Peek();
+                //}
+                /*
+                else
+                {
+                    chat.menu = chat.menuHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Pop();
+                }
+                */
             }
             else
             {
-                chat.menu = chat.menuHistory.Pop();
-                chat.statusString = chat.statusReplyHistory.Pop();
-                chat.cmdString = chat.cmdReplyHistory.Pop();
+                chat.menu = chat.menuHistory.Peek();
+                chat.statusString = chat.statusReplyHistory.Peek();
+                chat.cmdString = chat.cmdReplyHistory.Peek();
             }
             
             await chat.EditMessage();
