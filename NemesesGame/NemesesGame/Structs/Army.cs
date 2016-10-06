@@ -36,23 +36,29 @@ namespace NemesesGame
         int cost = 3;
         //float costX = 1.0f; // cost multiplier don't use this yet...
 
-        byte invadeMarchLength = 2;
+        byte invadeMarchLength = 3;
+		byte interceptMarchLength = 1;
 
-        public void StartMarch(byte thisFrontId, long targetId, byte frontId)
+		public void StartMarch(byte thisFrontId, long targetId, byte frontId)
         {
             Fronts[thisFrontId].TargetTelegramId = targetId;
             Fronts[thisFrontId].TargetFrontId = frontId;
             Fronts[thisFrontId].State = ArmyState.March;
-            Fronts[thisFrontId].MarchLeft = invadeMarchLength; // for now, it's only for invading
+			// If the target is base, set march length to invadeMarchLength
+			// Else (target is marching army, intercepting), set march length to interceptMarchLength
+			if (frontId == 0)
+				Fronts[thisFrontId].MarchLeft = invadeMarchLength;
+			else
+				Fronts[thisFrontId].MarchLeft = interceptMarchLength;
 
-            //Console.WriteLine("targetId= " + targetId);
-            //Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
-            //Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
-            //Console.WriteLine("TargetFrontId = " + Fronts[thisFrontId].TargetFrontId);
-            //Console.WriteLine("armyState = " + Fronts[thisFrontId].State);
-            
+			//Console.WriteLine("targetId= " + targetId);
+			//Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
+			//Console.WriteLine("Fronts[thisFrontId] TargetId = " + Fronts[thisFrontId].TargetTelegramId);
+			//Console.WriteLine("TargetFrontId = " + Fronts[thisFrontId].TargetFrontId);
+			//Console.WriteLine("armyState = " + Fronts[thisFrontId].State);
 
-        }
+
+		}
 
         public ArmyFront[] Fronts { get { return fronts; } set { fronts = value; } }
         //public List<ArmyFront> Fronts { get { return fronts; } set { fronts = value; } }

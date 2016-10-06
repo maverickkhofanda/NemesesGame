@@ -480,20 +480,8 @@ namespace NemesesGame
                                 }
                                 else
                                 {
-                                    // Intercept(); //not implemented yet
+                                    Intercept(kvp.Key, i, front.TargetTelegramId, front.TargetFrontId);
                                 }
-
-								// Resolve
-								// If there is army left, send it back to base
-								if (front.Number > 0)
-								{
-									ArmyFront frontBase = kvp.Value._army.Fronts[0];
-
-									frontBase.Number += front.Number;
-								}
-
-								// Remove current front
-								fronts[i] = null;
                             }
                         }
                     }
@@ -510,6 +498,21 @@ namespace NemesesGame
             ArmyFront offFront = cities[atkId]._army.Fronts[atkFrontId];
             ArmyFront defFront = cities[defId]._army.Fronts[defFrontId];
 
+			CityChatHandler atkChat = cities[atkId].chat;
+			CityChatHandler defChat = cities[defId].chat;
+
+			// First, check if the offFront still existed (Not intercepted)
+			if (offFront == null)
+			{
+				// offFront doesn't exist, intercepted by someone
+				atkChat.AddReply(ReplyType.status,
+				   GetLangString(groupId, "InvaderInterceptedPrivate"));
+
+				return;
+			}
+
+			Console.WriteLine("-Invade-\r\nAttacker : {0}\r\nDefender : {1}", atkId, defId);
+
             float defaultBase = 0.35f;
             float widthOffset = 0.25f;
 
@@ -523,7 +526,7 @@ namespace NemesesGame
                 (atkCP - defCP) / atkCP :
                 - ((defCP - atkCP) / defCP); // if 'defCP' is higher, make it minus
 
-			Console.WriteLine("{0}", outcome);
+			Console.WriteLine("Outcome : {0}", outcome);
 
             // let's do linear...
             float atkCasualtyPct = defaultBase - (widthOffset * outcome);
@@ -550,9 +553,6 @@ namespace NemesesGame
 
             PlayerDetails atkPD = cities[atkId].playerDetails;
             PlayerDetails defPD = cities[defId].playerDetails;
-
-            CityChatHandler atkChat = cities[atkId].chat;
-            CityChatHandler defChat = cities[defId].chat;
 
             //win loss
             if (outcome > 0.1 )
@@ -589,12 +589,136 @@ namespace NemesesGame
                 defChat.AddReply(ReplyType.status,
                     GetLangString(groupId, "DefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
             }
-        }
 
-        #endregion
+			// Resolve
+			// If there is army left, send it back to base
+			if (offFront.Number > 0)
+			{
+				ArmyFront frontBase = cities[atkId]._army.Fronts[0];
 
-        #region Inline Keyboard Interaction
-        public async Task MainMenu(long playerId = 0, int messageId = 0)
+				frontBase.Number += offFront.Number;
+			}
+
+			// Remove current attacking front
+			ArmyFront[] fronts = cities[atkId]._army.Fronts;
+			fronts[atkFrontId] = null;
+		}
+
+		void Intercept(long atkId, byte atkFrontId, long defId, byte defFrontId)
+		{
+			ArmyFront offFront = cities[atkId]._army.Fronts[atkFrontId];
+			ArmyFront defFront = cities[defId]._army.Fronts[defFrontId];
+
+			Console.WriteLine("-Intercept-\r\nAttacker : {0}\r\nDefender : {1}", atkId, defId);
+
+			float defaultBase = 0.35f;
+			float widthOffset = 0.25f;
+
+			float atkCP = offFront.CombatPower;
+			float defCP = defFront.CombatPower;
+			float atkNumber = offFront.Number;
+			float defNumber = defFront.Number;
+
+			// let's give 'outcome' a max number of 100% (or 1)
+			float outcome = atkCP >= defCP ?
+				(atkCP - defCP) / atkCP :
+				-((defCP - atkCP) / defCP); // if 'defCP' is higher, make it minus
+
+			Console.WriteLine("Outcome : {0}", outcome);
+
+			// let's do linear...
+			float atkCasualtyPct = defaultBase - (widthOffset * outcome);
+			float defCasualtyPct = defaultBase + (widthOffset * outcome);
+
+			/* wrong desired graph
+            float atkCasualtyPct = defaultBase + ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
+            float defCasualtyPct = defaultBase - ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
+            */
+
+			Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
+			Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
+
+			float atkCasualtyTemp = atkNumber * atkCasualtyPct;
+			float defCasualtyTemp = defNumber * defCasualtyPct;
+
+			int atkCasualty = (int)atkCasualtyTemp;
+			int defCasualty = (int)defCasualtyTemp;
+
+			offFront.Number -= atkCasualty;
+			defFront.Number -= defCasualty;
+
+			// now, we send the outcomes news...
+
+			PlayerDetails atkPD = cities[atkId].playerDetails;
+			PlayerDetails defPD = cities[defId].playerDetails;
+
+			CityChatHandler atkChat = cities[atkId].chat;
+			CityChatHandler defChat = cities[defId].chat;
+
+			//win loss
+			ArmyFront offFrontBase = cities[atkId]._army.Fronts[0];
+			ArmyFront defFrontBase = cities[defId]._army.Fronts[0];
+			ArmyFront[] offFronts = cities[atkId]._army.Fronts;
+			ArmyFront[] defFronts = cities[defId]._army.Fronts;
+
+			if (outcome > 0.1)
+			{
+				// intercepter win
+				botReply += GetLangString(groupId, "InterceptWinBroadcast", atkPD.cityName, defPD.cityName);
+
+				// chat details to players
+				atkChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptWinPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
+				defChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptDefenderLosePrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
+
+				// Resolve
+				// Offender & Defender returns to base
+				offFrontBase.Number += offFront.Number;
+				defFrontBase.Number += defFront.Number;
+				offFronts[atkFrontId] = null;
+				defFronts[defFrontId] = null;
+			}
+			else if (outcome < -0.1)
+			{
+				// defender win
+				botReply += GetLangString(groupId, "InterceptDefenderWinBroadcast", defPD.cityName, atkPD.cityName);
+
+				// chat details to players
+				atkChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptLostPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
+				defChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptDefenderWinPrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
+
+				// Resolve
+				// Only the Offender returns to base
+				offFrontBase.Number += offFront.Number;
+				offFronts[atkFrontId] = null;
+			}
+			else
+			{
+				// its a tie
+				botReply += GetLangString(groupId, "InterceptTieBroadcast", defPD.cityName, atkPD.cityName);
+
+				// chat details to players
+				atkChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptTiePrivate", defPD.cityName, atkCasualty, offFront.Number));
+				defChat.AddReply(ReplyType.status,
+					GetLangString(groupId, "InterceptDefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
+
+				// Resolve
+				// Offender & Defender returns to base
+				offFrontBase.Number += offFront.Number;
+				defFrontBase.Number += defFront.Number;
+				offFronts[atkFrontId] = null;
+				defFronts[defFrontId] = null;
+			}
+		}
+
+		#endregion
+
+		#region Inline Keyboard Interaction
+		public async Task MainMenu(long playerId = 0, int messageId = 0)
         {   
             if (playerId != 0 && messageId != 0)
             {
