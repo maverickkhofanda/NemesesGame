@@ -31,6 +31,25 @@ namespace NemesesGame
             return new Resources(0, 0, 0, 0);
         }
 
+        public void Add (ResourceType rType, int value)
+        {
+            switch (rType)
+            {
+                case ResourceType.Gold:
+                    gold += value;
+                    break;
+                case ResourceType.Wood:
+                    wood += value;
+                    break;
+                case ResourceType.Stone:
+                    stone += value;
+                    break;
+                case ResourceType.Mithril:
+                    mithril += value;
+                    break;
+            }
+        }
+
         public static Resources operator +(Resources a, Resources b)
         {
             Resources c = new Resources();

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Timers;
 using NemesesGame;
-using Telegram.Bot.Types;
 
 namespace NemesesGame
 {
@@ -27,6 +27,7 @@ namespace NemesesGame
         //InlineKeyboardMarkup menu;
 
         public Dictionary<long, City> cities = new Dictionary<long, City>();
+        MerchantGlobal merchantGlobal;
         string[] cityNames = { "Andalusia", "Transylvania", "Groot", "Saruman", "Azeroth" };
 
 		public GameStatus gameStatus = GameStatus.Unhosted;
@@ -55,7 +56,17 @@ namespace NemesesGame
 				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
 				await BotReply();
 
-				Timer(turnInterval, Turn);
+                // create new list for numbering player for Merchant journey
+                long[] playerIdArray = new long[cities.Count];
+                byte i = 0;
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    playerIdArray[i] = kvp.Key;
+                    i++;
+                }
+                merchantGlobal = new MerchantGlobal(playerIdArray);
+
+                Timer(turnInterval, Turn);
 			}
             else
 			{
@@ -93,20 +104,25 @@ namespace NemesesGame
             else
             {
 				// end this turn
+                // try not using TimeUp()
 				await TimeUp();
 
-				// Refresh chat
-				foreach (KeyValuePair<long, City> kvp in cities)
-				{
-					CityChatHandler chat = kvp.Value.chat;
-					chat.ClearReply(ReplyType.status);
-				}
 
-				// turn actions
-				ResourceRegen();
-				March();
+                // Refresh chat
+                foreach (KeyValuePair<long, City> kvp in cities)
+                {
+                    // clear everythingggg
+                    CityChatHandler chat = kvp.Value.chat;
+                    chat.ClearReply(ReplyType.status);
+                }
 
-				await MainMenu();
+                // turn actions
+                ResourceRegen();
+                merchantGlobal.UpdateDemandSupply();
+                March();
+                
+                await MainMenu();
+
 				// new turn actions
 				// News();
 			}
@@ -624,101 +640,223 @@ namespace NemesesGame
 				(atkCP - defCP) / atkCP :
 				-((defCP - atkCP) / defCP); // if 'defCP' is higher, make it minus
 
-			Console.WriteLine("Outcome : {0}", outcome);
 
-			// let's do linear...
-			float atkCasualtyPct = defaultBase - (widthOffset * outcome);
-			float defCasualtyPct = defaultBase + (widthOffset * outcome);
+            Console.WriteLine("Outcome : {0}", outcome);
 
-			/* wrong desired graph
+            // let's do linear...
+            float atkCasualtyPct = defaultBase - (widthOffset * outcome);
+            float defCasualtyPct = defaultBase + (widthOffset * outcome);
+
+            /* wrong desired graph
             float atkCasualtyPct = defaultBase + ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
             float defCasualtyPct = defaultBase - ((float)Math.Pow(outcome, 3) - (widthOffset * outcome));
             */
 
-			Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
-			Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
+            Console.WriteLine("atkCasualtyPct: " + atkCasualtyPct);
+            Console.WriteLine("defCasualtyPct: " + defCasualtyPct);
 
-			float atkCasualtyTemp = atkNumber * atkCasualtyPct;
-			float defCasualtyTemp = defNumber * defCasualtyPct;
+            float atkCasualtyTemp = atkNumber * atkCasualtyPct;
+            float defCasualtyTemp = defNumber * defCasualtyPct;
 
-			int atkCasualty = (int)atkCasualtyTemp;
-			int defCasualty = (int)defCasualtyTemp;
+            int atkCasualty = (int)atkCasualtyTemp;
+            int defCasualty = (int)defCasualtyTemp;
 
-			offFront.Number -= atkCasualty;
-			defFront.Number -= defCasualty;
+            offFront.Number -= atkCasualty;
+            defFront.Number -= defCasualty;
 
-			// now, we send the outcomes news...
+            // now, we send the outcomes news...
 
-			PlayerDetails atkPD = cities[atkId].playerDetails;
-			PlayerDetails defPD = cities[defId].playerDetails;
+            PlayerDetails atkPD = cities[atkId].playerDetails;
+            PlayerDetails defPD = cities[defId].playerDetails;
 
-			CityChatHandler atkChat = cities[atkId].chat;
-			CityChatHandler defChat = cities[defId].chat;
+            CityChatHandler atkChat = cities[atkId].chat;
+            CityChatHandler defChat = cities[defId].chat;
 
-			//win loss
-			ArmyFront offFrontBase = cities[atkId]._army.Fronts[0];
-			ArmyFront defFrontBase = cities[defId]._army.Fronts[0];
-			ArmyFront[] offFronts = cities[atkId]._army.Fronts;
-			ArmyFront[] defFronts = cities[defId]._army.Fronts;
+            //win loss
+            ArmyFront offFrontBase = cities[atkId]._army.Fronts[0];
+            ArmyFront defFrontBase = cities[defId]._army.Fronts[0];
+            ArmyFront[] offFronts = cities[atkId]._army.Fronts;
+            ArmyFront[] defFronts = cities[defId]._army.Fronts;
 
-			if (outcome > 0.1)
-			{
-				// intercepter win
-				botReply += GetLangString(groupId, "InterceptWinBroadcast", atkPD.cityName, defPD.cityName);
+            if (outcome > 0.1)
+            {
+                // intercepter win
+                botReply += GetLangString(groupId, "InterceptWinBroadcast", atkPD.cityName, defPD.cityName);
 
-				// chat details to players
-				atkChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptWinPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
-				defChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptDefenderLosePrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
+                // chat details to players
+                atkChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptWinPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptDefenderLosePrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
 
-				// Resolve
-				// Offender & Defender returns to base
-				offFrontBase.Number += offFront.Number;
-				defFrontBase.Number += defFront.Number;
-				offFronts[atkFrontId] = null;
-				defFronts[defFrontId] = null;
-			}
-			else if (outcome < -0.1)
-			{
-				// defender win
-				botReply += GetLangString(groupId, "InterceptDefenderWinBroadcast", defPD.cityName, atkPD.cityName);
+                // Resolve
+                // Offender & Defender returns to base
+                offFrontBase.Number += offFront.Number;
+                defFrontBase.Number += defFront.Number;
+                offFronts[atkFrontId] = null;
+                defFronts[defFrontId] = null;
+            }
+            else if (outcome < -0.1)
+            {
+                // defender win
+                botReply += GetLangString(groupId, "InterceptDefenderWinBroadcast", defPD.cityName, atkPD.cityName);
 
-				// chat details to players
-				atkChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptLostPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
-				defChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptDefenderWinPrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
+                // chat details to players
+                atkChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptLostPrivate", defPD.cityName, (int)(outcome * 100), atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptDefenderWinPrivate", atkPD.cityName, (int)(outcome * -100), defCasualty, defFront.Number));
 
-				// Resolve
-				// Only the Offender returns to base
-				offFrontBase.Number += offFront.Number;
-				offFronts[atkFrontId] = null;
-			}
-			else
-			{
-				// its a tie
-				botReply += GetLangString(groupId, "InterceptTieBroadcast", defPD.cityName, atkPD.cityName);
+                // Resolve
+                // Only the Offender returns to base
+                offFrontBase.Number += offFront.Number;
+                offFronts[atkFrontId] = null;
+            }
+            else
+            {
+                // its a tie
+                botReply += GetLangString(groupId, "InterceptTieBroadcast", defPD.cityName, atkPD.cityName);
 
-				// chat details to players
-				atkChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptTiePrivate", defPD.cityName, atkCasualty, offFront.Number));
-				defChat.AddReply(ReplyType.status,
-					GetLangString(groupId, "InterceptDefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
+                // chat details to players
+                atkChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptTiePrivate", defPD.cityName, atkCasualty, offFront.Number));
+                defChat.AddReply(ReplyType.status,
+                    GetLangString(groupId, "InterceptDefenderTiePrivate", atkPD.cityName, defCasualty, defFront.Number));
 
-				// Resolve
-				// Offender & Defender returns to base
-				offFrontBase.Number += offFront.Number;
-				defFrontBase.Number += defFront.Number;
-				offFronts[atkFrontId] = null;
-				defFronts[defFrontId] = null;
-			}
-		}
+                // Resolve
+                // Offender & Defender returns to base
+                offFrontBase.Number += offFront.Number;
+                defFrontBase.Number += defFront.Number;
+                offFronts[atkFrontId] = null;
+                defFronts[defFrontId] = null;
+            }
+        }
 
 		#endregion
+        
+        #region Merchant Actions
 
-		#region Inline Keyboard Interaction
-		public async Task MainMenu(long playerId = 0, int messageId = 0)
+        public async Task Merchant(long playerId, int messageId, string action = "", string materialType = "", int amountOrdered = 0)
+        {
+            CityChatHandler chat = cities[playerId].chat;
+            ResourceType[] mtrlType = { ResourceType.Wood, ResourceType.Stone, ResourceType.Mithril };
+
+            if (action == "")
+            {
+                chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantGreeting"));
+
+                // add current price ticker
+                foreach (ResourceType r in mtrlType)
+                {
+                    chat.AddReply(ReplyType.command,
+                        string.Format("*{0}*: *{1}*💰 / *{2}*💰\r\n",
+                            GetLangString(groupId, Enum.GetName(typeof(ResourceType), r)),
+                            merchantGlobal.BuyPrice[r],
+                            merchantGlobal.SellPrice[r])
+                        );
+                }
+
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Buy"), $"Merchant|{groupId}|Buy"));
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Sell"), $"Merchant|{groupId}|Sell"));
+                chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+                chat.SetMenu();
+
+                chat.AddReplyHistory();
+                await chat.EditMessage();
+            }
+            else
+            {
+                if (materialType == "")
+                {
+                    // ask which resource to buy/sell
+                    // current price shown at the menu before
+
+                    chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantAskMaterial"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Wood"), $"Merchant|{groupId}|{action}|Wood"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Stone"), $"Merchant|{groupId}|{action}|Stone"));
+                    chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Mithril"), $"Merchant|{groupId}|{action}|Mithril"));
+                    chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "Back"), $"Back|{groupId}"));
+
+                    chat.SetMenu();
+
+                    chat.AddReplyHistory();
+                    await chat.EditMessage();
+                }
+                else
+                {
+                    // ask the amount ordered
+                    if (amountOrdered == 0)
+                    {
+                        // use ForceReply
+                        ForceReply f = new ForceReply();
+                        f.Force = true;
+
+                        // need to set some parameters to process the player's reply
+                        string rType = materialType.ToLower();
+
+                        chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantAskAmount",
+                            GetLangString(groupId, rType)));
+
+
+                        // put parameters here embedded as url
+                        chat.AddReply(ReplyType.command, $"[?](Merchant.{groupId}.{action}.{materialType})");
+
+                        await chat.EditMessage(forceReply: f);
+                    }/*
+                    else
+                    {
+                        // get the trade run!
+                        ResourceType rType = (ResourceType)Enum.Parse(typeof(ResourceType), materialType);
+
+                        if (action == "Buy")
+                        {
+                            MerchantBuy(playerId, messageId, rType,)
+                        }
+                        else if (action == "Sell")
+                        {
+
+                        }
+                    }*/
+                }
+            }
+        }
+
+        async Task MerchantBuy(long playerId, int messageId, ResourceType rType, int amountOrdered)
+        {
+            //MerchantGlobal mg = merchantGlobal;
+            CityChatHandler chat = cities[playerId].chat;
+
+            // check if got enough money
+            int goldCost = amountOrdered * merchantGlobal.BuyPrice[rType];
+            Resources cost = new Resources(goldCost, 0, 0, 0);
+
+            if (PayCost(ref cities[playerId]._resources, cost, playerId))
+            {
+                // add city's CurrentResources
+                cities[playerId]._resources.Add(rType, amountOrdered);
+
+                // add MerchantGlobal.ThisTurnDemand
+                merchantGlobal.ThisTurnDemand[rType] += amountOrdered;
+
+                // show trade successful
+                chat.EditReply(ReplyType.status, GetLangString(groupId, "MerchantTradeSuccess",
+                    amountOrdered,
+                    Enum.GetName(typeof(ResourceType), rType),
+                    merchantGlobal.BuyPrice[rType],
+                    goldCost));
+            }
+
+            await MainMenu(playerId, messageId);
+            await chat.EditMessage();
+        }
+
+        // MerchantSell() waits MerchantBuy() test
+        // void MerchantSell() { }
+        
+        #endregion
+
+        #region Inline Keyboard Interaction
+        public async Task MainMenu(long playerId = 0, int messageId = 0)
         {   
             if (playerId != 0 && messageId != 0)
             {
@@ -762,6 +900,12 @@ namespace NemesesGame
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "AssignTask"), $"AssignTask|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "CityStatus"), $"YourStatus|{groupId}"));
             chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Attack"), $"Attack|{groupId}"));
+
+            if ((bool) merchantGlobal.IsMerchantInCity[playerId])
+            {
+                chat.buttons.Add(new InlineKeyboardButton(GetLangString(groupId, "Merchant"), $"Merchant|{groupId}"));
+            }
+
             // no Back button
             chat.menu = new InlineKeyboardMarkup(chat.buttons.Select(x => new[] { x }).ToArray());
             
@@ -898,22 +1042,33 @@ namespace NemesesGame
         {
             CityChatHandler chat = cities[playerId].chat;
 
-            if (chat.menuHistory.Count == chat.backCount)
+            if (chat.statusReplyHistory.Count != 1)
             {
-                chat.menu = chat.menuHistory.Pop();
-                chat.menu = chat.menuHistory.Pop();
+                //if (chat.menuHistory.Count == chat.backCount)
+                //{
+                    chat.menu = chat.menuHistory.Pop();
+                    chat.menu = chat.menuHistory.Peek();
 
-                chat.statusString = chat.statusReplyHistory.Pop();
-                chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Peek();
 
-                chat.cmdString = chat.cmdReplyHistory.Pop();
-                chat.cmdString = chat.cmdReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Peek();
+                //}
+                /*
+                else
+                {
+                    chat.menu = chat.menuHistory.Pop();
+                    chat.statusString = chat.statusReplyHistory.Pop();
+                    chat.cmdString = chat.cmdReplyHistory.Pop();
+                }
+                */
             }
             else
             {
-                chat.menu = chat.menuHistory.Pop();
-                chat.statusString = chat.statusReplyHistory.Pop();
-                chat.cmdString = chat.cmdReplyHistory.Pop();
+                chat.menu = chat.menuHistory.Peek();
+                chat.statusString = chat.statusReplyHistory.Peek();
+                chat.cmdString = chat.cmdReplyHistory.Peek();
             }
             
             await chat.EditMessage();

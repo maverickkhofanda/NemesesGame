@@ -9,6 +9,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using NemesesGame;
 using Telegram.Bot.Types.Enums;
+using System.Diagnostics;
 
 namespace NemesesGame
 {
@@ -36,6 +37,11 @@ namespace NemesesGame
             me = thisBot;
         }
 
+        public async Task ArgsHandler(string[] args)
+        {
+
+        }
+
         public async Task CommandHandler(Message message)
         {
             var messageText = message.Text;
@@ -47,7 +53,43 @@ namespace NemesesGame
             var thisChatId = message.Chat.Id;
             var thisChatName = "";
 
-            Console.WriteLine("\r\nMessage received from " + senderFirstName + " (" + senderId + ")" + " at " + thisChatId);
+            //Console.WriteLine("\r\nMessage received from " + senderFirstName + " (" + senderId + ")" + " at " + thisChatId);
+
+            string[] args;
+
+            //if (message.ReplyToMessage != null)
+            //{
+            //    string param = "";
+
+            //    foreach (MessageEntity msgEnt in message.ReplyToMessage.Entities)
+            //    {
+            //        if (msgEnt.Type == MessageEntityType.TextLink)
+            //        {
+            //            param = msgEnt.Url;
+
+            //            param.Remove(0, 7);
+            //            param.Remove(param.Length - 1);
+
+            //            break;
+            //        }
+            //    }
+
+            //    args = param.Split('.');
+
+            //    Console.WriteLine("param: " + param);
+            //}
+            //else
+            //{
+                //remove all non alphanumeric char
+                char[] arr = messageText.ToCharArray();
+                arr = Array.FindAll(arr, (c => (char.IsLetterOrDigit(c)
+                                                  || char.IsWhiteSpace(c)
+                                                  || c == '-')));
+                messageText = new string(arr);
+
+                args = messageText.Split(null); //here, null means space (" ")
+                args[0] = args[0].ToLower().Replace(me.Username.ToLower(), "");
+            //}
 
             //assign thischatname
             if (message.Chat.Type == ChatType.Private)
@@ -58,21 +100,17 @@ namespace NemesesGame
             {
                 thisChatName = message.Chat.Title;
             }
-
-            //remove all non alphanumeric char
-            char[] arr = messageText.ToCharArray();
-            arr = Array.FindAll(arr, (c => (char.IsLetterOrDigit(c)
-                                              || char.IsWhiteSpace(c)
-                                              || c == '-')));
-            messageText = new string(arr);
-
-            string[] args = messageText.Split(null); //here, null means space (" ")
-            //args[0] = args[0].Replace("/", "");
-            args[0] = args[0].ToLower().Replace(me.Username.ToLower(), "");
-
+            
             // for now... check explicitly: IsInGroup, IsDev
             switch (args[0])
             {
+                #region in game replies
+
+                case "merchant":
+                    
+
+                #endregion
+
                 case "choosename":
                     if (gameDict.ContainsKey(thisChatId))
                     {
@@ -91,7 +129,7 @@ namespace NemesesGame
                                     }
 
                                     // limits the cityName length...
-                                    byte maxLength = 25;
+                                    byte maxLength = 19;
                                     if (newCityName.Length >= maxLength)
                                     {
                                         newCityName = newCityName.Substring(0, maxLength);
@@ -106,7 +144,7 @@ namespace NemesesGame
                                     await BotReply(thisChatId);
                                     break;
                                 }
-                            } catch (IndexOutOfRangeException e)
+                            } catch (IndexOutOfRangeException)
                             {
                                 reply += GetLangString(thisChatId, "ChooseNameEmpty");
                                 await BotReply(thisChatId);
@@ -234,6 +272,149 @@ namespace NemesesGame
             }
         }
 
+        public async Task ReplyMsgHandler(Message message)
+        {
+            string param = "";
+            string[] args;
+
+            foreach (MessageEntity msgEnt in message.ReplyToMessage.Entities)
+            {
+                if (msgEnt.Type == MessageEntityType.TextLink)
+                {
+                    param = msgEnt.Url;
+                    
+                    param = param.Remove(0, 7);
+                    param = param.Remove(param.Length-1);
+
+                    break;
+                }
+            }
+
+            Console.WriteLine("param: " + param);
+            args = param.Split('.');
+
+            // process the input for 0-9 only
+
+            //remove all non numeric char
+            char[] arr = message.Text.ToCharArray();
+            arr = Array.FindAll(arr, (c => (char.IsDigit(c))));
+
+            // add the input to args
+            if (arr != null)
+            {
+                string[] temp = { new string(arr) };
+                args.Concat(temp);
+                Console.WriteLine("player input: " + temp[0]);
+            }
+            else
+            {
+                Console.WriteLine("Player didn't input numeric!");
+            }
+
+            //int i = 0;
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = Program.UppercaseFirst(args[i]);
+
+                Console.WriteLine("args[{0}]: {1}", i, args[i]);
+            }
+        }
+
+        public async Task GameArgsHandler(long senderId, int msgId, string[] args)
+        {
+            long groupId = long.Parse(args[1]);
+
+            switch (args[0])
+            {
+                #region game callbacks
+
+                case "ResourceUpgrade":
+                    await gameDict[groupId].ResourceUpgrade(senderId, msgId, args[2]);
+                    break;
+
+                case "RaiseArmy":
+                    // check if args has the additional parameter...
+                    switch (args.Length)
+                    {
+                        case 2:
+                            await gameDict[groupId].RaiseArmy(senderId, msgId);
+                            break;
+                        case 3:
+                            int armyNumber = int.Parse(args[2]);
+                            await gameDict[groupId].RaiseArmy(senderId, msgId, armyNumber);
+                            break;
+                            /* revamp Army...
+                            case 4:
+                                int armyNumber = int.Parse(args[3]);
+                                Console.WriteLine("armyNumber: " + armyNumber);
+                                await gameDict[groupId].RaiseArmy(senderId, msgId, args[2], armyNumber);
+                                break;
+                            */
+                    }
+                    break;
+                case "Attack":
+                    long atkPlayerId;
+                    byte frontId;
+
+                    // check if args has the additional parameter...
+                    switch (args.Length)
+                    {
+                        case 2:
+                            await gameDict[groupId].Attack(senderId, msgId);
+                            break;
+                        case 4:
+                            atkPlayerId = long.Parse(args[2]);
+                            frontId = byte.Parse(args[3]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId);
+                            break;
+                        case 5:
+                            atkPlayerId = long.Parse(args[2]);
+                            frontId = byte.Parse(args[3]);
+                            int deployPercent = int.Parse(args[4]);
+                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId, deployPercent);
+                            break;
+                    }
+                    break;
+                case "Merchant":
+                    switch (args.Length)
+                    {
+                        case 2:
+                            await gameDict[groupId].Merchant(senderId, msgId);
+                            break;
+                        case 3:
+                            await gameDict[groupId].Merchant(senderId, msgId, args[2]);
+                            break;
+                        case 4:
+                            await gameDict[groupId].Merchant(senderId, msgId, args[2], args[3]);
+                            break;
+                    }
+                    break;
+                #endregion
+
+                #region menu callbacks
+                case "AssignTask":
+                    await gameDict[groupId].AssignTask(senderId, msgId);
+                    break;
+
+                case "UpgradeProduction":
+                    await gameDict[groupId].UpgradeProduction(senderId, msgId);
+                    break;
+
+                case "YourStatus":
+                    await gameDict[groupId].MyStatus(senderId, msgId);
+                    break;
+
+                case "Back":
+                    await gameDict[groupId].Back(senderId, msgId);
+                    break;
+
+                default:
+                    break;
+
+                    #endregion
+            }
+        }
+
         public async Task CallbackQueryHandler(CallbackQuery callbackQuery)
         {
             var msgId = callbackQuery.Message.MessageId;
@@ -245,7 +426,6 @@ namespace NemesesGame
 
             var args = callbackQuery.Data.Split('|');
             // QueryCommand = args[0]
-            long groupId = long.Parse(args[1]);
 
             /*
             if (gameDict[groupId].cities[senderId].chat.msgId == 0)
@@ -263,81 +443,98 @@ namespace NemesesGame
             Console.WriteLine("\r\nCallbackQuery received from " + senderName + " (" + senderId + ")");
             Console.WriteLine("CallbackQuery data : " + callbackQuery.Data);
 
-            switch (args[0])
-            {
-                #region game callbacks
+            await GameArgsHandler(senderId, msgId, args);
 
-                case "ResourceUpgrade":
-					await gameDict[groupId].ResourceUpgrade(senderId, msgId, args[2]);
-                    break;
+     //       long groupId = long.Parse(args[1]);
+     //       switch (args[0])
+     //       {
+     //           #region game callbacks
 
-                case "RaiseArmy":
-                    // check if args has the additional parameter...
-                    switch(args.Length)
-                    {
-                        case 2:
-                            await gameDict[groupId].RaiseArmy(senderId, msgId);
-                            break;
-                        case 3:
-                            int armyNumber = int.Parse(args[2]);
-                            await gameDict[groupId].RaiseArmy(senderId, msgId, armyNumber);
-                            break;
-                        /* revamp Army...
-                        case 4:
-                            int armyNumber = int.Parse(args[3]);
-                            Console.WriteLine("armyNumber: " + armyNumber);
-                            await gameDict[groupId].RaiseArmy(senderId, msgId, args[2], armyNumber);
-                            break;
-                        */
-                    }
-                    break;
-                case "Attack":
-                    long atkPlayerId;
-                    byte frontId;
+     //           case "ResourceUpgrade":
+					//await gameDict[groupId].ResourceUpgrade(senderId, msgId, args[2]);
+     //               break;
 
-                    // check if args has the additional parameter...
-                    switch (args.Length)
-                    {   
-                        case 2:
-                            await gameDict[groupId].Attack(senderId, msgId);
-                            break;
-                        case 4:
-                            atkPlayerId = long.Parse(args[2]);
-                            frontId = byte.Parse(args[3]);
-                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId);
-                            break;
-                        case 5:
-                            atkPlayerId = long.Parse(args[2]);
-                            frontId = byte.Parse(args[3]);
-                            int deployPercent = int.Parse(args[4]);
-                            await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId, deployPercent);
-                            break;
-                    }
-                    break;
-                #endregion
+     //           case "RaiseArmy":
+     //               // check if args has the additional parameter...
+     //               switch(args.Length)
+     //               {
+     //                   case 2:
+     //                       await gameDict[groupId].RaiseArmy(senderId, msgId);
+     //                       break;
+     //                   case 3:
+     //                       int armyNumber = int.Parse(args[2]);
+     //                       await gameDict[groupId].RaiseArmy(senderId, msgId, armyNumber);
+     //                       break;
+     //                   /* revamp Army...
+     //                   case 4:
+     //                       int armyNumber = int.Parse(args[3]);
+     //                       Console.WriteLine("armyNumber: " + armyNumber);
+     //                       await gameDict[groupId].RaiseArmy(senderId, msgId, args[2], armyNumber);
+     //                       break;
+     //                   */
+     //               }
+     //               break;
+     //           case "Attack":
+     //               long atkPlayerId;
+     //               byte frontId;
 
-                    #region menu callbacks
-                    case "AssignTask":
-                    await gameDict[groupId].AssignTask(senderId, msgId);
-                    break;
+     //               // check if args has the additional parameter...
+     //               switch (args.Length)
+     //               {   
+     //                   case 2:
+     //                       await gameDict[groupId].Attack(senderId, msgId);
+     //                       break;
+     //                   case 4:
+     //                       atkPlayerId = long.Parse(args[2]);
+     //                       frontId = byte.Parse(args[3]);
+     //                       await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId);
+     //                       break;
+     //                   case 5:
+     //                       atkPlayerId = long.Parse(args[2]);
+     //                       frontId = byte.Parse(args[3]);
+     //                       int deployPercent = int.Parse(args[4]);
+     //                       await gameDict[groupId].Attack(senderId, msgId, atkPlayerId, frontId, deployPercent);
+     //                       break;
+     //               }
+     //               break;
+     //           case "Merchant":
+     //               switch (args.Length)
+     //               {
+     //                   case 2:
+     //                       await gameDict[groupId].Merchant(senderId, msgId);
+     //                       break;
+     //                   case 3:
+     //                       await gameDict[groupId].Merchant(senderId, msgId, args[2]);
+     //                       break;
+     //                   case 4:
+     //                       await gameDict[groupId].Merchant(senderId, msgId, args[2], args[3]);
+     //                       break;
+     //               }
+     //               break;
+     //           #endregion
 
-                    case "UpgradeProduction":
-                        await gameDict[groupId].UpgradeProduction(senderId, msgId);
-                        break;
+     //               #region menu callbacks
+     //               case "AssignTask":
+     //               await gameDict[groupId].AssignTask(senderId, msgId);
+     //               break;
 
-                case "YourStatus":
-                    await gameDict[groupId].MyStatus(senderId, msgId);
-                    break;
+     //               case "UpgradeProduction":
+     //                   await gameDict[groupId].UpgradeProduction(senderId, msgId);
+     //                   break;
 
-                case "Back":
-                    await gameDict[groupId].Back(senderId, msgId);
-                    break;
+     //           case "YourStatus":
+     //               await gameDict[groupId].MyStatus(senderId, msgId);
+     //               break;
 
-                default:
-                    break;
+     //           case "Back":
+     //               await gameDict[groupId].Back(senderId, msgId);
+     //               break;
 
-                #endregion
-            }
+     //           default:
+     //               break;
+
+     //           #endregion
+     //       }
         }
 
         string GetLangString(long chatId, string key, params object[] args)
