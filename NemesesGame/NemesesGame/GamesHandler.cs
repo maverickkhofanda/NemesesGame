@@ -37,11 +37,6 @@ namespace NemesesGame
             me = thisBot;
         }
 
-        public async Task ArgsHandler(string[] args)
-        {
-
-        }
-
         public async Task CommandHandler(Message message)
         {
             var messageText = message.Text;
@@ -277,6 +272,7 @@ namespace NemesesGame
             string param = "";
             string[] args;
 
+            //find the parameter
             foreach (MessageEntity msgEnt in message.ReplyToMessage.Entities)
             {
                 if (msgEnt.Type == MessageEntityType.TextLink)
@@ -290,25 +286,41 @@ namespace NemesesGame
                 }
             }
 
-            Console.WriteLine("param: " + param);
+            //Console.WriteLine("param: " + param);
             args = param.Split('.');
-
-            // process the input for 0-9 only
-
+            
             //remove all non numeric char
             char[] arr = message.Text.ToCharArray();
             arr = Array.FindAll(arr, (c => (char.IsDigit(c))));
 
+            long groupId = long.Parse(args[1]);
+            long senderId = message.From.Id;
+
             // add the input to args
-            if (arr != null)
+            if (arr.Length != 0)
             {
                 string[] temp = { new string(arr) };
-                args.Concat(temp);
+                args = args.Concat(temp).ToArray();
                 Console.WriteLine("player input: " + temp[0]);
             }
+            // if not numeric, return
             else
             {
                 Console.WriteLine("Player didn't input numeric!");
+                reply += GetLangString(senderId, "NonNumericInput");
+
+                // return the previous menu
+                try
+                {
+                    await gameDict[groupId].Back(senderId);
+                }
+                catch (KeyNotFoundException)
+                {
+                    reply += GetLangString(senderId, "NotJoinedGame");
+                }
+
+                await BotReply(senderId);
+                return;
             }
 
             //int i = 0;
@@ -316,7 +328,16 @@ namespace NemesesGame
             {
                 args[i] = Program.UppercaseFirst(args[i]);
 
-                Console.WriteLine("args[{0}]: {1}", i, args[i]);
+                //Console.WriteLine("args[{0}]: {1}", i, args[i]);
+            }
+
+            try
+            {
+                await GameArgsHandler(senderId, message.MessageId, args);
+            }
+            catch (KeyNotFoundException)
+            {
+                reply += GetLangString(senderId, "NotJoinedGame");
             }
         }
 
@@ -387,6 +408,10 @@ namespace NemesesGame
                         case 4:
                             await gameDict[groupId].Merchant(senderId, msgId, args[2], args[3]);
                             break;
+                        case 5:
+                            int amountOrdered = int.Parse(args[4]);
+                            await gameDict[groupId].Merchant(senderId, msgId, args[2], args[3], amountOrdered);
+                            break;
                     }
                     break;
                 #endregion
@@ -405,7 +430,7 @@ namespace NemesesGame
                     break;
 
                 case "Back":
-                    await gameDict[groupId].Back(senderId, msgId);
+                    await gameDict[groupId].Back(senderId);
                     break;
 
                 default:

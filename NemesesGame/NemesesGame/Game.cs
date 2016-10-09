@@ -795,14 +795,14 @@ namespace NemesesGame
                         string rType = materialType.ToLower();
 
                         chat.EditReply(ReplyType.command, GetLangString(groupId, "MerchantAskAmount",
-                            GetLangString(groupId, rType)));
-
-
+                            GetLangString(groupId, rType),
+                            action.ToLowerInvariant()));
+                        
                         // put parameters here embedded as url
                         chat.AddReply(ReplyType.command, $"[?](Merchant.{groupId}.{action}.{materialType})");
 
                         await chat.EditMessage(forceReply: f);
-                    }/*
+                    }
                     else
                     {
                         // get the trade run!
@@ -810,20 +810,20 @@ namespace NemesesGame
 
                         if (action == "Buy")
                         {
-                            MerchantBuy(playerId, messageId, rType,)
+                            await MerchantBuy(playerId, messageId, rType, amountOrdered);
                         }
                         else if (action == "Sell")
                         {
-
+                            await MerchantSell(playerId, messageId, rType, amountOrdered);
                         }
-                    }*/
+                        
+                    }
                 }
             }
         }
 
         async Task MerchantBuy(long playerId, int messageId, ResourceType rType, int amountOrdered)
         {
-            //MerchantGlobal mg = merchantGlobal;
             CityChatHandler chat = cities[playerId].chat;
 
             // check if got enough money
@@ -832,6 +832,7 @@ namespace NemesesGame
 
             if (PayCost(ref cities[playerId]._resources, cost, playerId))
             {
+                // got enough money
                 // add city's CurrentResources
                 cities[playerId]._resources.Add(rType, amountOrdered);
 
@@ -839,19 +840,47 @@ namespace NemesesGame
                 merchantGlobal.ThisTurnDemand[rType] += amountOrdered;
 
                 // show trade successful
-                chat.EditReply(ReplyType.status, GetLangString(groupId, "MerchantTradeSuccess",
+                chat.EditReply(ReplyType.status, GetLangString(groupId, "MerchantBuySuccess",
                     amountOrdered,
-                    Enum.GetName(typeof(ResourceType), rType),
-                    merchantGlobal.BuyPrice[rType],
-                    goldCost));
+                    GetLangString(groupId, Enum.GetName(typeof(ResourceType), rType) + "Sym"),
+                    goldCost,
+                    merchantGlobal.BuyPrice[rType]));
             }
 
             await MainMenu(playerId, messageId);
-            await chat.EditMessage();
         }
+        
+        async Task MerchantSell(long playerId, int messageId, ResourceType rType, int amountOrdered)
+        {
+            CityChatHandler chat = cities[playerId].chat;
 
-        // MerchantSell() waits MerchantBuy() test
-        // void MerchantSell() { }
+            // check if got enough resources
+            Resources sellOrder = new Resources();
+            sellOrder.Add(rType, amountOrdered);
+            
+            if (PayCost(ref cities[playerId]._resources, sellOrder, playerId))
+            {
+                // add player's gold
+                int goldReceived = amountOrdered * merchantGlobal.SellPrice[rType];
+                cities[playerId]._resources.Gold += goldReceived;
+
+                // got enough resources
+                // substract city's CurrentResources
+                cities[playerId]._resources.Add(rType, -amountOrdered);
+
+                // add MerchantGlobal.ThisTurnSupply
+                merchantGlobal.ThisTurnSupply[rType] += amountOrdered;
+
+                // show trade successful
+                chat.EditReply(ReplyType.status, GetLangString(groupId, "MerchantSellSuccess",
+                    amountOrdered,
+                    GetLangString(groupId, Enum.GetName(typeof(ResourceType), rType) + "Sym"),
+                    goldReceived,
+                    merchantGlobal.SellPrice[rType]));
+            }
+
+            await MainMenu(playerId, messageId);
+        }
         
         #endregion
 
@@ -915,8 +944,7 @@ namespace NemesesGame
         public async Task AssignTask(long playerId, int messageId)
         {
             CityChatHandler chat = cities[playerId].chat;
-
-            //CityStatus(playerId);
+            
             chat.EditReply(ReplyType.command, GetLangString(groupId, "AssignTask"));
 
             chat.AddMenuButton(new InlineKeyboardButton(GetLangString(groupId, "UpgradeProduction"), $"UpgradeProduction|{groupId}"));
@@ -1038,7 +1066,7 @@ namespace NemesesGame
             await chat.EditMessage();
         }
 
-        public async Task Back(long playerId, int messageId)
+        public async Task Back(long playerId)
         {
             CityChatHandler chat = cities[playerId].chat;
 
@@ -1103,8 +1131,7 @@ namespace NemesesGame
         public async Task GameHosted()
         {
             gameStatus = GameStatus.Hosted;
-            botReply += "New game is made in this lobby!\r\n";
-            await BotReply();
+            botReply += GetLangString(groupId, "GameHosted");
         }
 
         public async Task GameUnhosted()
@@ -1223,7 +1250,7 @@ namespace NemesesGame
 			{
                 // Resource not enough
                 //Console.WriteLine("Not enough resources\r\n");
-                cities[playerId].chat.AddReply(ReplyType.status, GetLangString(groupId, "NotEnoughResources"));
+                cities[playerId].chat.EditReply(ReplyType.status, GetLangString(groupId, "NotEnoughResources"));
 				return false;
 			}
 			else // currentResource is enough, deduct resourceCost from currentResource
