@@ -4,12 +4,16 @@
 		{
 		"---REGION : Resources---" : "",
 		"gold" : "gold",
+		"GoldSym" : "💰",
 		"Gold" : "Gold💰",
 		"wood" : "wood",
+		"WoodSym" : "🌲",
 		"Wood" : "Wood🌲",
 		"stone" : "stone",
+		"StoneSym" : "🗿",
 		"Stone" : "Stone🗿",
 		"mithril" : "mithril",
+		"MithrilSym" : "💎",
 		"Mithril" : "Mithril💎",
 
 		"Regulars" : "Regulars🗡",
@@ -21,12 +25,13 @@
 		"Intercept" : "encountering {0} on the way",
 
 		"---REGION : Lobby (Group)---" : "",
-		"AskChooseName" : "\r\nYou can choose your name for *{0}* seconds by using /choosename (your city name).",
+		"AskChooseName" : "You can choose your name for *{0}* seconds by using < /choosename (your city name) >.\r\n\r\n",
 		"IteratePlayerCityName" : "*{0}* as *{1}*'s head of state\r\n",
 		"JoinedGame" : "*{0}* *{1}* has joined the game!\r\n",
 		"LeaveGame" : "*{0}* *{1}* has left the lobby!\r\n",
 		"NextTurn" : "\r\nTurn *{0}*\n\rNext turn in *{1}* secs\r\n",
 		"ThisTurn" : " (turn *{0}*)",
+		"GameHosted" : "New game is made in this lobby!\r\n",
 		"StartGameGroup" : "Game is starting...\r\n",
 		"StartedGameGroup" : "There is a game started in this group already...\r\n",
 		
@@ -65,8 +70,9 @@
 			"MerchantSell" : "What would you like to sell?",
 			"MerchantGreeting" : "Good morning sir! What would you like to trade with a humble merchant? (Buy/Sell price / pcs)\r\n",
 			"MerchantAskMaterial" : "Which item do you want to trade?",
-			"MerchantTradeSuccess" : "Thank you for trading with us!\r\n\r\nYou got *{0}* *{1}* with *{2}*💰 apiece (Total: *{3}*💰)\r\n\r\n",
-			"MerchantAskAmount" : "How many *{0}* do you want to trade",
+			"MerchantBuySuccess" : "Thank you for trading with us!\r\nYou bought *{0}*{1} and paid *{2}*💰 (*{3}*💰 apiece)\r\n",
+			"MerchantSellSuccess" : "Thank you for trading with us!\r\nYou sold *{0}*{1} and received *{2}*💰 (*{3}*💰 apiece)\r\n",
+			"MerchantAskAmount" : "How many *{0}* do you want to {1}",
 
 		"---Sub-REGION : In-game Headers: Army ---" : "",
 			"InvaderWinBroadcast" : "*{0}* has won the Invasion of *{1}*!\r\n",
@@ -107,6 +113,7 @@
 		"NotEnoughResources" : "You don't have enough resources!\r\n",
 		"LvlMaxAlready" : "Your *{0}* level is maxed already!\r\n",
 		"FrontMaxNumber" : "You have reached the maximum number of fronts!\r\n",
+		"NonNumericInput" : "Please input numeric input\r\n",
 
 		"---REGION : Status---" : "",
 		"CurrentResources" : [ 
@@ -117,6 +124,7 @@
 		"CurrentArmyNotBase" : "Front *{0}* *{1}*: *{2}* (arrive in *{3}* turns)\r\n",
 		"CurrentDefendingArmy" : "Army in base: *{0}* troops🗡\r\n",
 		"TimeUp" : "Time's up for turn {0}",
+		"RefreshChat" : "Interface refreshed below",
 
 		"---REGION : Buttons---" : "",
 		"Back" : "Back↩",

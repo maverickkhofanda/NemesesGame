@@ -31,6 +31,23 @@ namespace NemesesGame
             return new Resources(0, 0, 0, 0);
         }
 
+        public int GetThisResource(ResourceType resourceType)
+        {
+            switch (resourceType)
+            {
+                case ResourceType.Gold:
+                    return gold;
+                case ResourceType.Wood:
+                    return wood;
+                case ResourceType.Stone:
+                    return stone;
+                case ResourceType.Mithril:
+                    return mithril;
+                default:
+                    return 0;
+            }
+        }
+
         public void Add (ResourceType rType, int value)
         {
             switch (rType)
@@ -83,29 +100,43 @@ namespace NemesesGame
 
         public static bool operator !=(Resources a, Resources b)
         {
-            if (a.Gold != b.Gold
-                || a.Wood != b.Wood
-                || a.Stone != b.Stone
-                || a.Mithril != b.Mithril) { return true; }
-            else { return false; }
+            return !(a == b);
         }
 
 		public static bool operator <(Resources a, Resources b)
 		{
 			if (a.Gold < b.Gold
-				|| a.Wood < b.Wood
-				|| a.Stone < b.Stone
-				|| a.Mithril < b.Mithril) { return true; }
+				&& a.Wood < b.Wood
+				&& a.Stone < b.Stone
+				&& a.Mithril < b.Mithril) { return true; }
 			else { return false; }
 		}
 
-		public static bool operator >(Resources a, Resources b)
+        public static bool operator <=(Resources a, Resources b)
+        {
+            if (a.Gold <= b.Gold
+                && a.Wood <= b.Wood
+                && a.Stone <= b.Stone
+                && a.Mithril <= b.Mithril) { return true; }
+            else { return false; }
+        }
+
+        public static bool operator >(Resources a, Resources b)
 		{
 			if (a.Gold > b.Gold
-				|| a.Wood > b.Wood
-				|| a.Stone > b.Stone
-				|| a.Mithril > b.Mithril) { return true; }
+				&& a.Wood > b.Wood
+				&& a.Stone > b.Stone
+				&& a.Mithril > b.Mithril) { return true; }
 			else { return false; }
 		}
+
+        public static bool operator >=(Resources a, Resources b)
+        {
+            if (a.Gold >= b.Gold
+                && a.Wood >= b.Wood
+                && a.Stone >= b.Stone
+                && a.Mithril >= b.Mithril) { return true; }
+            else { return false; }
+        }
 	}
 }
