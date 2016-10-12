@@ -31,7 +31,7 @@ namespace NemesesGame
         public City(long telegramId, string firstName, string lastName, string cityName, long groupId)
         {
             playerDetails = new PlayerDetails(telegramId, firstName, lastName, cityName, groupId);
-            chat = new CityChatHandler(playerDetails.telegramId);
+            chat = new CityChatHandler(playerDetails.telegramId, groupId);
 
             InitCity();
         }

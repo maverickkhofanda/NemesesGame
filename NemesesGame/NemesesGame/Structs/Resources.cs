@@ -100,39 +100,43 @@ namespace NemesesGame
 
         public static bool operator !=(Resources a, Resources b)
         {
-            if (a.Gold != b.Gold
-                || a.Wood != b.Wood
-                || a.Stone != b.Stone
-                || a.Mithril != b.Mithril) { return true; }
-            else { return false; }
+            return !(a == b);
         }
 
 		public static bool operator <(Resources a, Resources b)
 		{
 			if (a.Gold < b.Gold
-				|| a.Wood < b.Wood
-				|| a.Stone < b.Stone
-				|| a.Mithril < b.Mithril) { return true; }
+				&& a.Wood < b.Wood
+				&& a.Stone < b.Stone
+				&& a.Mithril < b.Mithril) { return true; }
 			else { return false; }
 		}
 
         public static bool operator <=(Resources a, Resources b)
         {
-            return !(a > b);
+            if (a.Gold <= b.Gold
+                && a.Wood <= b.Wood
+                && a.Stone <= b.Stone
+                && a.Mithril <= b.Mithril) { return true; }
+            else { return false; }
         }
 
         public static bool operator >(Resources a, Resources b)
 		{
 			if (a.Gold > b.Gold
-				|| a.Wood > b.Wood
-				|| a.Stone > b.Stone
-				|| a.Mithril > b.Mithril) { return true; }
+				&& a.Wood > b.Wood
+				&& a.Stone > b.Stone
+				&& a.Mithril > b.Mithril) { return true; }
 			else { return false; }
 		}
 
         public static bool operator >=(Resources a, Resources b)
         {
-            return !(a < b);
+            if (a.Gold >= b.Gold
+                && a.Wood >= b.Wood
+                && a.Stone >= b.Stone
+                && a.Mithril >= b.Mithril) { return true; }
+            else { return false; }
         }
 	}
 }

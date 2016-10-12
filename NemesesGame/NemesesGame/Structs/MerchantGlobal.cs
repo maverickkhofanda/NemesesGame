@@ -108,8 +108,15 @@ namespace NemesesGame
                 // DemandSupplyMultiplier (DemSupMult) setter
                 if (Denominator[r] != 0)
                 {
-                    DemSupMult[r] = ((ThisTurnDemand[r] - ThisTurnSupply[r]) / Denominator[r])
-                                    + (DemSupMult[r] * AvgWeightConst);
+                    // check if denominator too low
+                    float cutOffDenom = (float) Math.Round(10000f / (double) BasePrice[r]);
+                    if (Denominator[r] >= cutOffDenom)
+                    {
+                        cutOffDenom = Denominator[r];
+                    }
+
+                    DemSupMult[r] = ((ThisTurnDemand[r] - ThisTurnSupply[r]) / cutOffDenom)
+                                + (DemSupMult[r] * AvgWeightConst);
                 }
                 else
                 {
@@ -273,7 +280,7 @@ namespace NemesesGame
 
         }
 
-        void NextPosition ()
+        public void NextPosition ()
         {
             bool isMerchantAtCity0 = false;
 

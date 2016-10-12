@@ -25,7 +25,7 @@
 		"Intercept" : "encountering {0} on the way",
 
 		"---REGION : Lobby (Group)---" : "",
-		"AskChooseName" : "\r\nYou can choose your name for *{0}* seconds by using /choosename (your city name).",
+		"AskChooseName" : "You can choose your name for *{0}* seconds by using < /choosename (your city name) >.\r\n\r\n",
 		"IteratePlayerCityName" : "*{0}* as *{1}*'s head of state\r\n",
 		"JoinedGame" : "*{0}* *{1}* has joined the game!\r\n",
 		"LeaveGame" : "*{0}* *{1}* has left the lobby!\r\n",
@@ -124,6 +124,7 @@
 		"CurrentArmyNotBase" : "Front *{0}* *{1}*: *{2}* (arrive in *{3}* turns)\r\n",
 		"CurrentDefendingArmy" : "Army in base: *{0}* troops🗡\r\n",
 		"TimeUp" : "Time's up for turn {0}",
+		"RefreshChat" : "Interface refreshed below",
 
 		"---REGION : Buttons---" : "",
 		"Back" : "Back↩",
