@@ -21,6 +21,7 @@ namespace NemesesGame
         public InlineKeyboardMarkup menu;
 
         public long playerId;
+        public long groupId;
         public int statusMsgId = 0;
         public int cmdMsgId = 0;
 		public int messageId = 0;
@@ -31,9 +32,10 @@ namespace NemesesGame
 		public Stack<InlineKeyboardMarkup> menuHistory = new Stack<InlineKeyboardMarkup>(10);
         public int backCount = 0;
 
-        public CityChatHandler(long _playerId)
+        public CityChatHandler(long _playerId, long _groupId)
         {
             playerId = _playerId;
+            groupId = _groupId;
         }
 
         
@@ -94,6 +96,11 @@ namespace NemesesGame
 			messageReplyHistory.Clear();
             menuHistory.Clear();
         }
+
+        public async Task RemovePreviousChat()
+        {
+            await Program.EditMessage(playerId, messageId, Program.GetLangString(groupId, "RefreshChat"));
+        }
         public void AddReply(ReplyType rType, string replyString)
         {
             if (rType == ReplyType.command)
@@ -112,8 +119,6 @@ namespace NemesesGame
 				//Console.WriteLine("Current general string : {0}", generalString);
 			}
         }
-
-        
 
 		public void EditReply(ReplyType rType, string replyString)
 		{
@@ -150,15 +155,10 @@ namespace NemesesGame
 			}
 		}
 
-        public async Task SendReply(ParseMode _parseMode = ParseMode.Markdown, ForceReply forceReply = null)
+        // this better changed to SendMessage
+        public async Task SendReply(ParseMode _parseMode = ParseMode.Markdown, bool getNewMsgId = false)
         {
             IReplyMarkup repMarkup = menu;
-
-            // changes the 'repMarkup' to forceReply
-            if (forceReply != null)
-            {
-                repMarkup = forceReply;
-            }
 
             if (statusString != "" && cmdString != "")
             {
@@ -176,13 +176,19 @@ namespace NemesesGame
                 //cmdString = "";
 
                 // try to get the msgId
-                if (/*statusMsgId == 0 && cmdMsgId == 0*/ messageId == 0)
+                if (/*statusMsgId == 0 && cmdMsgId == 0*/ messageId == 0 || getNewMsgId == true)
                 {
                     //send the status first, then the command... also get the MsgId here
                     //Message statusMsg =
                     //    await Program.SendMessage(playerId, statusReplyString, _parseMode: _parseMode);
                     //Message cmdMsg =
                     //    await Program.SendMessage(playerId, cmdReplyString, repMarkup, _parseMode);
+
+                    if (getNewMsgId == true)
+                    {
+                        // deletes previous message
+                        await RemovePreviousChat();
+                    }
                     Message messageReply =
                         await Program.SendMessage(playerId, messageReplyString, repMarkup, _parseMode);
                     
@@ -190,6 +196,8 @@ namespace NemesesGame
                     //statusMsgId = statusMsg.MessageId;
                     //cmdMsgId = cmdMsg.MessageId;
                     messageId = messageReply.MessageId;
+
+                    getNewMsgId = false;
                 }
                 else // we don't need to get the msgId...
                 {
@@ -213,7 +221,7 @@ namespace NemesesGame
             }
         }
 
-        public async Task EditMessage(IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown, ForceReply forceReply = null)
+        public async Task EditMessage(IReplyMarkup replyMarkup = null, ParseMode ParseMode = ParseMode.Markdown, bool forceReply = false)
         {
             /*
             if (statusString != "")
@@ -235,9 +243,9 @@ namespace NemesesGame
 
             IReplyMarkup repMarkup = menu;
 
-            if (forceReply != null)
+            if (forceReply == true)
             {
-                repMarkup = forceReply;
+                repMarkup = new ForceReply() { Force = true };
             }
 
 			//Console.WriteLine("EditMessage Called\r\n");

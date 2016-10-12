@@ -51,10 +51,9 @@ namespace NemesesGame
 			{
 				gameStatus = GameStatus.Starting;
 				botReply += GetLangString(groupId, "StartGameGroup");
-				await PlayerList();
 
 				botReply += GetLangString(groupId, "AskChooseName", turnInterval);
-				await BotReply();
+                await PlayerList();
 
                 // create new list for numbering player for Merchant journey
                 long[] playerIdArray = new long[cities.Count];
@@ -119,6 +118,7 @@ namespace NemesesGame
                 // turn actions
                 ResourceRegen();
                 merchantGlobal.UpdateDemandSupply();
+                merchantGlobal.NextPosition();
                 March();
                 
                 await MainMenu();
@@ -787,10 +787,6 @@ namespace NemesesGame
                     // ask the amount ordered
                     if (amountOrdered == 0)
                     {
-                        // use ForceReply
-                        ForceReply f = new ForceReply();
-                        f.Force = true;
-
                         // need to set some parameters to process the player's reply
                         string rType = materialType.ToLower();
 
@@ -801,10 +797,12 @@ namespace NemesesGame
                         // put parameters here embedded as url
                         chat.AddReply(ReplyType.command, $"[?](Merchant.{groupId}.{action}.{materialType})");
 
-                        await chat.EditMessage(forceReply: f);
+                        await chat.EditMessage(forceReply: true);
                     }
                     else
                     {
+                        //Refresh chat
+
                         // get the trade run!
                         ResourceType rType = (ResourceType)Enum.Parse(typeof(ResourceType), materialType);
 
@@ -847,7 +845,10 @@ namespace NemesesGame
                     merchantGlobal.BuyPrice[rType]));
             }
 
-            await MainMenu(playerId, messageId);
+            //RefreshAndSendMsg(playerId);
+            SetMainMenu(playerId);
+            CityStatus(playerId);
+            await chat.SendReply(getNewMsgId: true);
         }
         
         async Task MerchantSell(long playerId, int messageId, ResourceType rType, int amountOrdered)
@@ -866,7 +867,7 @@ namespace NemesesGame
 
                 // got enough resources
                 // substract city's CurrentResources
-                cities[playerId]._resources.Add(rType, -amountOrdered);
+                //cities[playerId]._resources.Add(rType, -amountOrdered);
 
                 // add MerchantGlobal.ThisTurnSupply
                 merchantGlobal.ThisTurnSupply[rType] += amountOrdered;
@@ -879,7 +880,10 @@ namespace NemesesGame
                     merchantGlobal.SellPrice[rType]));
             }
 
-            await MainMenu(playerId, messageId);
+            //RefreshAndSendMsg(playerId);
+            SetMainMenu(playerId);
+            CityStatus(playerId);
+            await chat.SendReply(getNewMsgId: true);
         }
         
         #endregion
@@ -1246,20 +1250,21 @@ namespace NemesesGame
             //Console.WriteLine("Upgrade gold, wood, stone, mithril cost : {0}, {1}, {2}, {3}\r\n", resourceCost.Gold, resourceCost.Wood, resourceCost.Stone, resourceCost.Mithril);
             
 			// If currentResource is not enough
-			if (currentResource < resourceCost)
+			if (currentResource >= resourceCost)
+			{
+                currentResource = (currentResource - resourceCost);
+                //Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
+                // Paid 'resourceCost'
+                return true;
+                
+			}
+			else // currentResource is enough, deduct resourceCost from currentResource
 			{
                 // Resource not enough
                 //Console.WriteLine("Not enough resources\r\n");
                 cities[playerId].chat.EditReply(ReplyType.status, GetLangString(groupId, "NotEnoughResources"));
-				return false;
-			}
-			else // currentResource is enough, deduct resourceCost from currentResource
-			{
-				currentResource = (currentResource - resourceCost);
-				//Console.WriteLine("Current gold, wood, stone, mithril : {0}, {1}, {2}, {3}\r\n", currentResource.Gold, currentResource.Wood, currentResource.Stone, currentResource.Mithril);
-				// Paid 'resourceCost'
-				return true;
-			}
+                return false;
+            }
 		}
 
         void BroadcastCityStatus()
