@@ -119,7 +119,10 @@ namespace NemesesGame
                 ResourceRegen();
                 merchantGlobal.UpdateDemandSupply();
                 merchantGlobal.NextPosition();
-                March();
+				March();
+
+				// Check winning conditions
+				await CheckWin();
                 
                 await MainMenu();
 
@@ -469,7 +472,7 @@ namespace NemesesGame
         {
             // find each marching front
 
-            // iterate each city
+            // iterate each city for intercept
             foreach(KeyValuePair<long, City> kvp in cities)
             {
                 // then iterate each fronts
@@ -490,11 +493,7 @@ namespace NemesesGame
                             {
                                 ArmyState targetState = GetFront(front.TargetTelegramId, front.TargetFrontId).State;
                                 
-                                if (targetState == ArmyState.Base)
-                                {
-                                    Invade(kvp.Key, i, front.TargetTelegramId, front.TargetFrontId);
-                                }
-                                else
+                                if (targetState != ArmyState.Base)
                                 {
                                     Intercept(kvp.Key, i, front.TargetTelegramId, front.TargetFrontId);
                                 }
@@ -507,7 +506,40 @@ namespace NemesesGame
                     }
                 }
             }
-        }
+
+			// iterate each city for invade
+			foreach (KeyValuePair<long, City> kvp in cities)
+			{
+				// then iterate each fronts
+				for (byte i = 0; i < 10; i++)
+				{
+					// if front have no army, break to next city
+					if (kvp.Value._army.Fronts[i] != null)
+					{
+						ArmyFront front = kvp.Value._army.Fronts[i];
+						ArmyFront[] fronts = kvp.Value._army.Fronts;
+
+						// if march = 0 (aka. reached the destination), do the thing
+						if (front.State == ArmyState.March)
+						{
+							if (front.MarchLeft == 0)
+							{
+								ArmyState targetState = GetFront(front.TargetTelegramId, front.TargetFrontId).State;
+
+								if (targetState == ArmyState.Base)
+								{
+									Invade(kvp.Key, i, front.TargetTelegramId, front.TargetFrontId);
+								}
+							}
+						}
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+		}
         
         void Invade(long atkId, byte atkFrontId, long defId, byte defFrontId)
         {
@@ -575,6 +607,10 @@ namespace NemesesGame
             {
                 // invader win
                 botReply += GetLangString(groupId, "InvaderWinBroadcast", atkPD.cityName, defPD.cityName);
+				// Add the defeated player to the defeated list of the invader
+				// Remove the invader from the defeated player list
+				cities[atkId].defeated.Add(defId);
+				cities[defId].defeated.Remove(atkId);
 
                 // chat details to players
                 atkChat.AddReply(ReplyType.status, 
@@ -1144,6 +1180,7 @@ namespace NemesesGame
             botReply += "Lobby unhosted!\r\n";
             await BotReply();
         }
+
         public bool PlayerCheck(long telegramId, string firstName, string lastName)
         {
             //Checks if a player has joined the lobby
@@ -1212,7 +1249,13 @@ namespace NemesesGame
 				cities.Remove(telegramId);
 				playerCount--;
 
-                botReply += GetLangString(groupId, "LeaveGame", firstName, lastName);
+				// Remove the player from other players' defeated list
+				foreach (KeyValuePair<long, City> player in cities)
+				{
+					player.Value.defeated.Remove(telegramId);
+				}
+
+				botReply += GetLangString(groupId, "LeaveGame", firstName, lastName);
 				await BotReply();
 			}
 			else
@@ -1265,6 +1308,35 @@ namespace NemesesGame
                 cities[playerId].chat.EditReply(ReplyType.status, GetLangString(groupId, "NotEnoughResources"));
                 return false;
             }
+		}
+
+		async Task CheckWin()
+		{
+			foreach (KeyValuePair<long, City> player in cities)
+			{
+				PlayerDetails playerDet = player.Value.playerDetails;
+
+				Console.WriteLine("{0} has defeated {1} cities\r\n", player.Key, player.Value.defeated.Count);
+
+				// Check if player have won against all players
+				if ((cities.Count-1) == player.Value.defeated.Count)
+				{
+					// Console check defeated player list
+					foreach (long defeatedPlayer in player.Value.defeated)
+					{
+						Console.WriteLine("{0} defeated {1}\r\n", player.Key, defeatedPlayer);
+					}
+
+					// Send the win notification to the group
+					botReply += GetLangString(groupId, "GameWon", playerDet.firstName, playerDet.lastName, playerDet.cityName);
+					await BotReply();
+					Console.WriteLine("Sent game won notification to group {0}\r\n", groupId);
+
+					// Unhost the game
+					Program.GameRemove(groupId);
+					Console.WriteLine("Removed game for group {0}\r\n", groupId);
+				}
+			}
 		}
 
         void BroadcastCityStatus()
@@ -1362,3 +1434,4 @@ namespace NemesesGame
         */
     }
 }
+
