@@ -166,6 +166,11 @@ namespace NemesesGame
             Console.WriteLine("Msg {0} processed in {1} ms", message.MessageId, sw.ElapsedMilliseconds);
         }
 
+		public static void GameRemove(long groupId)
+		{
+			gamesHandler.GameRemove(groupId);
+		}
+
         #region Messaging
         public static void LoadLanguage()
         {

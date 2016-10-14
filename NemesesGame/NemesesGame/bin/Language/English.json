@@ -34,6 +34,7 @@
 		"GameHosted" : "New game is made in this lobby!\r\n",
 		"StartGameGroup" : "Game is starting...\r\n",
 		"StartedGameGroup" : "There is a game started in this group already...\r\n",
+		"GameWon" : "*{0}* *{1}* (*{2}*) has won the game!\r\n",
 		
 		"---REGION : Lobby (Private)---" : "",
 		"NameChosen" : "Your city name: *{0}*",

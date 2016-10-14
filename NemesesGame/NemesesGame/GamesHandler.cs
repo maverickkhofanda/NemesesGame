@@ -37,6 +37,12 @@ namespace NemesesGame
             me = thisBot;
         }
 
+		public void GameRemove(long groupId)
+		{
+			Console.WriteLine("Removing game from groupId : {0}\r\n", groupId);
+			gameDict.Remove(groupId);
+		}
+
         public async Task CommandHandler(Message message)
         {
             var messageText = message.Text;

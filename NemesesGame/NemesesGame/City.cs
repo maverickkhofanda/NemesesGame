@@ -17,13 +17,12 @@ namespace NemesesGame
         public Resources resourceRegen;
         public Dictionary<ResourceType, byte> lvlResourceRegen = new Dictionary<ResourceType, byte>();
         public Army _army = new Army();
+		public List<long> defeated = new List<long>();
 
         RefResources refResources = new RefResources();
         public PlayerDetails playerDetails;
         public CityChatHandler chat;
-
-
-
+		
         /* Unimplemented yet
          * public Upgrades cityUpgrades;
          */
