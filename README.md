@@ -29,4 +29,4 @@ Additional Features:
 5. Skills (for each city)
 
 Idea:
-1. Ult Tech effect --> become fucking imba (He must beat all opponents in X turns to win, unless then, the other win)
+1. Ult Tech effect --> become imba (He must beat all opponents in X turns to win, unless then, the other win)
